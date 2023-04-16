@@ -1,4 +1,29 @@
+/* ul {
+  background-color: transparent;
+} */
+
 a {
   text-decoration: none;
+  color: black;
+  transition: 0.2s;
+}
+
+a.settings,
+a.nav {
+  padding: 10px 20px;
+  display: block;
+}
+
+a.settings {
+  color: white;
+  letter-spacing: 1px;
+}
+
+a:hover {
+  text-decoration: none;
+  font-weight: bold;
+}
+
+a.settings:hover {
   color: white;
 }

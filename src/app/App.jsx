@@ -1,8 +1,7 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import PageNotFound from "../pageNotFound/PageNotFound";
-import Home from "../home/Home";
-import UserHome from "../userHome/UserHome";
+import HomeContainer from "../home/HomeContainer";
 import UserProfile from "../userProfile/UserProfile";
 import Header from "../header/Header";
 import Description from "../description/Description";
@@ -16,6 +15,7 @@ import Create from "../create/Create";
 import SettingsPanel from "../settings/SettingsPanel";
 import AdminPanel from "../admin/AdminPanel";
 import LogOutPage from "../logout/LogOutPage";
+import Footer from "../footer/Footer";
 
 import "./App.css";
 
@@ -25,13 +25,12 @@ const App = () => {
       <Header />
       <div className="wrapper">
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<HomeContainer />} />
           <Route path="/description" element={<Description />} />
           <Route path="/functionalities" element={<Functionalities />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
 
-          <Route path="/home" element={<UserHome />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/dashboards" element={<Dashboards />} />
           <Route path="/tasks" element={<Tasks />} />
@@ -44,6 +43,7 @@ const App = () => {
           <Route path="*" element={<PageNotFound />} />
         </Routes>
       </div>
+      <Footer />
     </div>
   );
 };

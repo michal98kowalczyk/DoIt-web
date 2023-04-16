@@ -18,7 +18,7 @@ import "./Header.css";
 
 const pages = ["Home", "Projects", "Dashboards", "Tasks", "Create"];
 const pagesPaths = new Map([
-  ["Home", "/home"],
+  ["Home", "/"],
   ["Projects", "/projects"],
   ["Dashboards", "/dashboards"],
   ["Tasks", "/tasks"],
@@ -62,7 +62,14 @@ const HeaderLoggedOut = () => {
   };
 
   return (
-    <AppBar position="static" color="transparent">
+    <AppBar
+      position="static"
+      color="transparent"
+      sx={{
+        bgcolor: "rgb(0,0,0,0.08)",
+        borderBottom: "2px solid rgb(0,0,0,0.4)",
+      }}
+    >
       <Container maxWidth="xl">
         <Toolbar disableGutters>
           <EventNoteIcon sx={{ display: { xs: "none", md: "flex" }, mr: 1 }} />
@@ -70,7 +77,7 @@ const HeaderLoggedOut = () => {
             variant="h6"
             noWrap
             component="a"
-            href="/home"
+            href="/"
             sx={{
               mr: 2,
               display: { xs: "none", md: "flex" },
@@ -135,7 +142,7 @@ const HeaderLoggedOut = () => {
             variant="h5"
             noWrap
             component="a"
-            href="/home"
+            href="/"
             sx={{
               mr: 2,
               display: { xs: "flex", md: "none" },

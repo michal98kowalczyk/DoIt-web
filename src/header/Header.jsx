@@ -5,7 +5,7 @@ import "./Header.css";
 
 const Header = () => {
   // const isLoggedIn = !!sessionStorage.getItem("user");
-  const isLoggedIn = true;
+  const isLoggedIn = false;
 
   useEffect(() => {
     console.log("Header ", isLoggedIn);

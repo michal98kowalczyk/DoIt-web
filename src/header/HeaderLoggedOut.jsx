@@ -49,7 +49,14 @@ const HeaderLoggedOut = () => {
   };
 
   return (
-    <AppBar position="static" color="transparent">
+    <AppBar
+      position="static"
+      color="transparent"
+      sx={{
+        bgcolor: "rgb(0,0,0,0.08)",
+        borderBottom: "2px solid rgb(0,0,0,0.4)",
+      }}
+    >
       <Container maxWidth="xl">
         <Toolbar disableGutters>
           <EventNoteIcon sx={{ display: { xs: "none", md: "flex" }, mr: 1 }} />
@@ -131,7 +138,7 @@ const HeaderLoggedOut = () => {
                 >
                   <Button
                     fullWidth={true}
-                    sx={{ bgcolor: "#ddd", display: "block" }}
+                    sx={{ backgroundColor: "rgb(0,0,0,0.9)", display: "block" }}
                   >
                     <Link
                       className="settings mobile"
@@ -185,11 +192,11 @@ const HeaderLoggedOut = () => {
                 onClick={handleCloseUserMenu}
                 sx={{
                   my: 2,
-                  color: "black",
+                  color: "white",
                   padding: 0,
                   display: "block",
-                  backgroundColor: "#ddd",
-                  marginRight: "5px",
+                  backgroundColor: "rgb(0,0,0,0.9)",
+                  marginRight: "20px",
                   transition: 0.1,
                   "&:hover": {
                     backgroundColor: "rgb(70, 86, 235)",

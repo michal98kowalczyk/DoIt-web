@@ -1,0 +1,17 @@
+main.signup {
+  background-image: url("../images/homework-g244973bba_1920.jpg");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position-y: center;
+}
+
+.signup-wrapper {
+  /* background-color: rgb(200, 200, 200); */
+  min-width: 100vw;
+  min-height: calc(100vh - 150px);
+}
+
+.signup-form {
+  margin: 0 auto;
+  padding: 5%;
+}

@@ -3,7 +3,7 @@ import UserHome from "./UserHome";
 import Home from "./Home";
 
 const HomeContainer = () => {
-  const isLoggedIn = false;
+  const isLoggedIn = !!sessionStorage.getItem("user");
 
   return <>{isLoggedIn ? <UserHome /> : <Home />}</>;
 };

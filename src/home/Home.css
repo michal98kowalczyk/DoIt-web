@@ -41,7 +41,7 @@ a.joinUs {
     display: none;
   }
 
-  main {
+  main.home {
     background-image: url("../images/homework-g244973bba_1920.jpg");
     background-repeat: no-repeat;
     background-size: cover;

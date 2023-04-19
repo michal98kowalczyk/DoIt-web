@@ -65,7 +65,7 @@ const Home = () => {
   }, []);
 
   const homeBody = (
-    <main>
+    <main className="home">
       <div className="wrapperHome">
         <section className="image">{timeline}</section>
         <div className="join">

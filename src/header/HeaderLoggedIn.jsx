@@ -25,12 +25,16 @@ const pagesPaths = new Map([
   ["Create", "/create"],
   ["Profile", "/profile"],
   ["Settings", "/settings"],
+  ["Manage", "/admin"],
 ]);
 const settings = ["Profile", "Settings", "Logout"];
 
-const HeaderLoggedOut = () => {
+const HeaderLoggedIn = ({ userRole }) => {
   const navigate = useNavigate();
-
+  const showAdminPanel = userRole === "ADMIN";
+  console.log("userRole ", userRole);
+  console.log("showAdminPanel ", showAdminPanel);
+  const settingsToDisplay = showAdminPanel ? ["Manage", ...settings] : settings;
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
 
@@ -58,7 +62,9 @@ const HeaderLoggedOut = () => {
   };
 
   const handleLogOut = () => {
-    console.log("loggin out ");
+    sessionStorage.removeItem("user");
+    navigate("/logout");
+    window.location.reload();
   };
 
   return (
@@ -192,7 +198,7 @@ const HeaderLoggedOut = () => {
               open={Boolean(anchorElUser)}
               onClose={handleCloseUserMenu}
             >
-              {settings.map((setting) => (
+              {settingsToDisplay.map((setting) => (
                 <MenuItem
                   key={setting}
                   data-key={setting}
@@ -208,4 +214,4 @@ const HeaderLoggedOut = () => {
     </AppBar>
   );
 };
-export default HeaderLoggedOut;
+export default HeaderLoggedIn;

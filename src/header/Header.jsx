@@ -5,12 +5,20 @@ import "./Header.css";
 
 const Header = () => {
   const isLoggedIn = !!sessionStorage.getItem("user");
-  // const isLoggedIn = false;
+  const user = isLoggedIn ? JSON.parse(sessionStorage.getItem("user")) : null;
 
   useEffect(() => {
     console.log("Header ", isLoggedIn);
   }, []);
 
-  return <>{isLoggedIn ? <HeaderLoggedIn /> : <HeaderLoggedOut />}</>;
+  return (
+    <>
+      {isLoggedIn ? (
+        <HeaderLoggedIn userRole={user && user.role} />
+      ) : (
+        <HeaderLoggedOut />
+      )}
+    </>
+  );
 };
 export default Header;

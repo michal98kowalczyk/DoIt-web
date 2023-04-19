@@ -8,6 +8,7 @@ import Description from "../description/Description";
 import Functionalities from "../functionalities/Functionalities";
 import LoginPage from "../login/LoginPage";
 import SignUpPage from "../signup/SignUpPage";
+import SignUpSuccess from "../signup/SignUpSuccess";
 import Projects from "../projects/Projects";
 import Tasks from "../tasks/Tasks";
 import Dashboards from "../dashboards/Dashboards";
@@ -30,6 +31,7 @@ const App = () => {
           <Route path="/functionalities" element={<Functionalities />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/registered" element={<SignUpSuccess />} />
 
           <Route path="/projects" element={<Projects />} />
           <Route path="/dashboards" element={<Dashboards />} />

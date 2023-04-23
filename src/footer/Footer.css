@@ -4,3 +4,21 @@ footer {
   line-height: 50px;
   color: aliceblue;
 }
+
+.copyrights {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  color: rgb(193, 193, 194);
+  letter-spacing: 2px;
+}
+
+footer a {
+  margin-left: 20px;
+}
+
+.copyrights > span {
+  margin-right: 10px;
+  margin-left: 5px;
+}

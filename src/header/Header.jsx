@@ -4,8 +4,8 @@ import HeaderLoggedOut from "./HeaderLoggedOut";
 import "./Header.css";
 
 const Header = () => {
-  // const isLoggedIn = !!sessionStorage.getItem("user");
-  const isLoggedIn = false;
+  const isLoggedIn = !!sessionStorage.getItem("user");
+  // const isLoggedIn = false;
 
   useEffect(() => {
     console.log("Header ", isLoggedIn);

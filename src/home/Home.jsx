@@ -4,8 +4,58 @@ import "./Home.css";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
+import Timeline from "@mui/lab/Timeline";
+import TimelineItem from "@mui/lab/TimelineItem";
+import TimelineSeparator from "@mui/lab/TimelineSeparator";
+import TimelineConnector from "@mui/lab/TimelineConnector";
+import TimelineContent from "@mui/lab/TimelineContent";
+import TimelineDot from "@mui/lab/TimelineDot";
 
 import { Link } from "react-router-dom";
+
+const timelineItemStyle = { color: "black", fontWeight: "bolder" };
+
+const timeline = (
+  <Timeline
+    position="alternate"
+    sx={{ position: "relative", top: "50%", left: "15%" }}
+  >
+    <TimelineItem>
+      <TimelineSeparator>
+        <TimelineDot variant="outlined" />
+        <TimelineConnector />
+      </TimelineSeparator>
+      <TimelineContent sx={timelineItemStyle}>Requirements</TimelineContent>
+    </TimelineItem>
+    <TimelineItem>
+      <TimelineSeparator>
+        <TimelineDot variant="outlined" sx={timelineItemStyle} />
+        <TimelineConnector />
+      </TimelineSeparator>
+      <TimelineContent sx={timelineItemStyle}>Design</TimelineContent>
+    </TimelineItem>
+    <TimelineItem>
+      <TimelineSeparator>
+        <TimelineDot variant="outlined" />
+        <TimelineConnector />
+      </TimelineSeparator>
+      <TimelineContent sx={timelineItemStyle}>Implementation</TimelineContent>
+    </TimelineItem>
+    <TimelineItem>
+      <TimelineSeparator>
+        <TimelineDot variant="outlined" />
+        <TimelineConnector />
+      </TimelineSeparator>
+      <TimelineContent sx={timelineItemStyle}>Verification</TimelineContent>
+    </TimelineItem>
+    <TimelineItem>
+      <TimelineSeparator>
+        <TimelineDot variant="outlined" />
+      </TimelineSeparator>
+      <TimelineContent sx={timelineItemStyle}>Maintenance</TimelineContent>
+    </TimelineItem>
+  </Timeline>
+);
 
 const Home = () => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -16,9 +66,9 @@ const Home = () => {
 
   const homeBody = (
     <main>
-      <div className="wrapper">
-        <section className="image"></section>
-        <asside className="join">
+      <div className="wrapperHome">
+        <section className="image">{timeline}</section>
+        <div className="join">
           <Typography
             variant="h4"
             sx={{
@@ -70,7 +120,7 @@ const Home = () => {
               </Link>
             </Button>
           </Box>
-        </asside>
+        </div>
       </div>
     </main>
   );

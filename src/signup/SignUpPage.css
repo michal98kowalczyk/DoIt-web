@@ -15,3 +15,7 @@ main.signup {
   margin: 0 auto;
   padding: 5%;
 }
+
+.link-underline {
+  text-decoration: underline;
+}

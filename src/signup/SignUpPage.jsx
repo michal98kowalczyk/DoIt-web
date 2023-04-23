@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import PageLoader from "../loader/PageLoader";
+import CustomAlert from "../alert/CustomAlert";
+
 import { useNavigate } from "react-router-dom";
 
 import Box from "@mui/material/Box";
@@ -17,11 +19,18 @@ import { Link } from "react-router-dom";
 import CardContent from "@mui/material/CardContent";
 import Card from "@mui/material/Card";
 import "./SignUpPage.css";
+import Typography from "@mui/material/Typography";
+
+const passwordRegex = /^(?=.*\d)(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
 
 const SignUpPage = () => {
   const navigate = useNavigate();
 
   const [isLoading, setIsLoading] = useState(false);
+  // alert params
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertSeverity, setAlertSeverity] = useState("error");
+  const [alertMessage, setAlertMessage] = useState("");
 
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const [firstName, setFirstName] = useState("");
@@ -68,10 +77,31 @@ const SignUpPage = () => {
     setTerms(checked);
   };
 
+  const handleOpenAlert = (
+    severity = "error",
+    message = "error",
+    time = 2000
+  ) => {
+    setAlertMessage(message);
+    setAlertSeverity(severity);
+    setShowAlert(true);
+    setTimeout(() => {
+      setShowAlert(false);
+    }, time);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!passwordRegex.test(password)) {
+      handleOpenAlert(
+        "warning",
+        "Password should has minimum eight letter, at least one special character, one number, one upper and one lower case!",
+        4000
+      );
+      return;
+    }
+
     setIsLoading(true);
-    console.log("handleSubmit");
     const url = "http://localhost:8080/api/v1/auth/register";
     const requestParams = {
       method: "POST",
@@ -90,17 +120,18 @@ const SignUpPage = () => {
     fetch(url, requestParams)
       .then((response) => response.json())
       .then((data) => {
-        if (data.isSuccess) {
-          sessionStorage.setItem("user", JSON.stringify(data));
-          console.log(data);
-          console.log(sessionStorage.getItem("user"));
-          navigate("/");
+        console.log("data ", data);
+        if (data.success) {
+          navigate("/registered");
           window.location.reload();
         } else {
-          console.error("error ", data);
+          handleOpenAlert("error", data.errorMessage);
         }
       })
-      .catch((error) => console.error(error))
+      .catch((error) => {
+        console.error("error", error);
+        handleOpenAlert("error", error.message);
+      })
       .finally(() => setIsLoading(false));
   };
 
@@ -252,6 +283,13 @@ const SignUpPage = () => {
 
   return (
     <>
+      {showAlert && (
+        <CustomAlert
+          severity={alertSeverity}
+          handleCloseAlert={setShowAlert}
+          message={alertMessage}
+        />
+      )}
       {isLoading && <PageLoader />}
       <main className="signup">
         <div className="signup-wrapper">
@@ -263,6 +301,13 @@ const SignUpPage = () => {
                 width: { xs: "80%", md: "60%" },
               }}
             >
+              <Typography
+                variant="h4"
+                component="div"
+                sx={{ paddingTop: "20px", marginTop: "20px" }}
+              >
+                Sign up for your account
+              </Typography>
               <CardContent>{signUpFormBody}</CardContent>
             </Card>
           </div>

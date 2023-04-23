@@ -25,12 +25,16 @@ const pagesPaths = new Map([
   ["Create", "/create"],
   ["Profile", "/profile"],
   ["Settings", "/settings"],
+  ["Manage", "/admin"],
 ]);
 const settings = ["Profile", "Settings", "Logout"];
 
-const HeaderLoggedOut = () => {
+const HeaderLoggedIn = ({ userRole, name }) => {
   const navigate = useNavigate();
-
+  const showAdminPanel = userRole === "ADMIN";
+  console.log("name ", name);
+  console.log("showAdminPanel ", showAdminPanel);
+  const settingsToDisplay = showAdminPanel ? ["Manage", ...settings] : settings;
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
 
@@ -58,7 +62,9 @@ const HeaderLoggedOut = () => {
   };
 
   const handleLogOut = () => {
-    console.log("loggin out ");
+    sessionStorage.removeItem("user");
+    navigate("/logout");
+    window.location.reload();
   };
 
   return (
@@ -173,7 +179,7 @@ const HeaderLoggedOut = () => {
           <Box sx={{ flexGrow: 0 }}>
             <Tooltip title="Open settings">
               <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
+                <Avatar alt={name} src="/static/images/avatar/2.jpg" />
               </IconButton>
             </Tooltip>
             <Menu
@@ -192,7 +198,7 @@ const HeaderLoggedOut = () => {
               open={Boolean(anchorElUser)}
               onClose={handleCloseUserMenu}
             >
-              {settings.map((setting) => (
+              {settingsToDisplay.map((setting) => (
                 <MenuItem
                   key={setting}
                   data-key={setting}
@@ -208,4 +214,4 @@ const HeaderLoggedOut = () => {
     </AppBar>
   );
 };
-export default HeaderLoggedOut;
+export default HeaderLoggedIn;

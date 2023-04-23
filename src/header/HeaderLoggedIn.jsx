@@ -29,10 +29,10 @@ const pagesPaths = new Map([
 ]);
 const settings = ["Profile", "Settings", "Logout"];
 
-const HeaderLoggedIn = ({ userRole }) => {
+const HeaderLoggedIn = ({ userRole, name }) => {
   const navigate = useNavigate();
   const showAdminPanel = userRole === "ADMIN";
-  console.log("userRole ", userRole);
+  console.log("name ", name);
   console.log("showAdminPanel ", showAdminPanel);
   const settingsToDisplay = showAdminPanel ? ["Manage", ...settings] : settings;
   const [anchorElNav, setAnchorElNav] = useState(null);
@@ -179,7 +179,7 @@ const HeaderLoggedIn = ({ userRole }) => {
           <Box sx={{ flexGrow: 0 }}>
             <Tooltip title="Open settings">
               <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
+                <Avatar alt={name} src="/static/images/avatar/2.jpg" />
               </IconButton>
             </Tooltip>
             <Menu

@@ -49,7 +49,9 @@ const ProjectCreator = ({ type, close }) => {
   const [userOptions, setUserOptions] = useState([]);
 
   // form params
-  const [isError, setIsError] = useState(false);
+  const [isNameError, setIsNameError] = useState(false);
+  const [isTaskTypeError, setIsTaskTypeError] = useState(false);
+
   const [projectName, setProjectName] = useState("");
   const [taskType, setTaskType] = useState([]);
   const [users, setUsers] = useState([]);
@@ -139,37 +141,140 @@ const ProjectCreator = ({ type, close }) => {
   };
 
   const handleSubmit = () => {
-    setActiveStep(0);
+    if (!projectName || projectName === "") {
+      setIsNameError(true);
+      setActiveStep(1);
+      return;
+    }
+    if (!taskType || taskType.length === 0) {
+      setIsTaskTypeError(true);
+      setActiveStep(2);
+      return;
+    }
+    const projectRequest = prepareProjectRequest();
+    createProject(projectRequest);
+  };
+
+  const prepareProjectAssignmentRequest = (projectId) => {
+    let request;
+    if (users && users.length !== 0) {
+      request = users.map((u) => {
+        return {
+          project: { id: projectId },
+          user: { id: u.id },
+          position: "Standard User",
+          accessLevel: "EDIT",
+        };
+      });
+    }
+    return [
+      ...request,
+      {
+        project: { id: projectId },
+        user: { id: user.userId },
+        position: "Owner",
+        accessLevel: "MANAGE",
+      },
+    ];
+  };
+
+  const prepareProjectRequest = () => {
+    const tasksChoosen = taskTypeOptions
+      .filter((t) => taskType.includes(t.name))
+      .map((t) => {
+        return { id: t.id };
+      });
+
+    const projectRequest = {
+      name: projectName,
+      owner: { id: user.userId },
+      projectType: String(type).toUpperCase(),
+      availableTaskTypes: tasksChoosen,
+    };
+    return projectRequest;
+  };
+
+  const createProject = (projectRequest) => {
+    const url = "http://localhost:8080/api/v1/project";
+    const requestParams = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+      body: JSON.stringify(projectRequest),
+    };
+    setIsLoading(true);
+    fetch(url, requestParams)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.isSuccess) {
+          return data.id;
+        } else {
+          handleOpenAlert("error", data.errorMessage);
+          return null;
+        }
+      })
+      .then((projectId) => {
+        return createProjectAssignment(projectId);
+      })
+      .catch((error) => {
+        console.error("error", error);
+        handleOpenAlert("error", error.message);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
+
+  const createProjectAssignment = (projectId) => {
+    const request = prepareProjectAssignmentRequest(projectId);
+    const url = "http://localhost:8080/api/v1/assignments";
+    const requestParams = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+      body: JSON.stringify(request),
+    };
+    setIsLoading(true);
+    fetch(url, requestParams)
+      .then((response) => {
+        return response.text();
+      })
+      .then((data) => {
+        if (data === "SUCCESS") {
+          handleOpenAlert("success", "Project created successfully");
+          navigate("/projects");
+        } else {
+          handleOpenAlert("error", data);
+        }
+      })
+      .catch((error) => {
+        console.error("error", error);
+        handleOpenAlert("error", error.message);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   };
 
   const handleNameChange = (e) => {
     setProjectName(e.target.value);
+    setIsNameError(false);
   };
 
   const handleTaskTypeChange = (event) => {
     const { value } = event.target;
-    console.log("handleTaskTypeChange value ", value);
     setTaskType(typeof value === "string" ? value.split(",") : value);
-    // On autofill we get a stringified value.
-    //   typeof value === 'string' ? value.split(',') : value,
+    setIsTaskTypeError(false);
   };
 
   const handleUserChange = (event, values) => {
-    console.log("handleUserChange  event.target values", values);
-
-    console.log("handleUserChange  event.target ", event.target);
-
     const { value } = event.target;
-    console.log("handleUserChange value ", value);
-    console.log("userOptions ", userOptions);
     const choice = userOptions.find((u) => u.key === value);
-    console.log("choice ", choice);
     setUsers(values.sort((a, b) => -b.label.localeCompare(a.label)));
-    // setUsers(
-    //   [...users, choice].sort((a, b) => -b.label.localeCompare(a.label))
-    // );
-    // On autofill we get a stringified value.
-    //   typeof value === 'string' ? value.split(',') : value,
   };
 
   const handleOpenAlert = (
@@ -217,8 +322,8 @@ const ProjectCreator = ({ type, close }) => {
             onChange={handleNameChange}
             value={projectName}
             required
-            error={isError && !projectName}
-            helperText={isError ? "Complete this field" : ""}
+            error={isNameError}
+            helperText={isNameError ? "Complete this field" : ""}
             sx={{ width: "80%" }}
           />
         </form>
@@ -233,7 +338,7 @@ const ProjectCreator = ({ type, close }) => {
             <Select
               labelId="demo-multiple-chip-label"
               id="demo-multiple-chip"
-              error={isError && !taskType}
+              error={isTaskTypeError}
               multiple
               required
               value={taskType}
@@ -253,7 +358,7 @@ const ProjectCreator = ({ type, close }) => {
                 </MenuItem>
               ))}
             </Select>
-            {isError && !taskType && (
+            {isTaskTypeError && (
               <FormHelperText>Complete this field</FormHelperText>
             )}
           </FormControl>
@@ -285,7 +390,6 @@ const ProjectCreator = ({ type, close }) => {
           )}
           style={{ width: "90%" }}
           renderInput={(params) => {
-            console.log("params", params);
             return <TextField {...params} label="Users" placeholder="User" />;
           }}
         />

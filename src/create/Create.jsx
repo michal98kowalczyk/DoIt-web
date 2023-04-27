@@ -87,7 +87,7 @@ const Create = () => {
               <AddIcon
                 data-name={option}
                 data-type="project"
-                sx={{ dispaly: "inline-flex", verticalAlign: "top" }}
+                sx={{ display: "inline-flex", verticalAlign: "top" }}
               ></AddIcon>{" "}
               <span data-name={option} data-type="project">
                 {option}
@@ -129,7 +129,7 @@ const Create = () => {
               <AddIcon
                 data-name={option}
                 data-type="task"
-                sx={{ dispaly: "inline-flex", verticalAlign: "top" }}
+                sx={{ display: "inline-flex", verticalAlign: "top" }}
               ></AddIcon>{" "}
               <span data-name={option} data-type="task">
                 {option}

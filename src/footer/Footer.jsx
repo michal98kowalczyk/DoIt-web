@@ -16,11 +16,11 @@ const Footer = () => {
     <footer>
       <div className="copyrights">
         <CopyrightIcon /> <span>{authorName}</span>
-        <Link to={githubLink} target="_blank">
-          <GitHubIcon sx={{ color: "aliceblue" }} />
+        <Link className="footerLinks" to={githubLink} target="_blank">
+          <GitHubIcon sx={{ color: "aliceblue", marginTop: "5px" }} />
         </Link>
-        <Link to={linkedIdLink} target="_blank">
-          <LinkedInIcon sx={{ color: "aliceblue" }} />
+        <Link className="footerLinks" to={linkedIdLink} target="_blank">
+          <LinkedInIcon sx={{ color: "aliceblue", marginTop: "5px" }} />
         </Link>
       </div>
     </footer>

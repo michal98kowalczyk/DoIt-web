@@ -18,7 +18,7 @@ const timelineItemStyle = { color: "black", fontWeight: "bolder" };
 const timeline = (
   <Timeline
     position="alternate"
-    sx={{ position: "relative", top: "50%", left: "15%" }}
+    sx={{ position: "absolute", bottom: "3%", right: "15%" }}
   >
     <TimelineItem>
       <TimelineSeparator>

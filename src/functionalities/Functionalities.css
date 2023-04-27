@@ -1,0 +1,12 @@
+main.documentation {
+  text-align: left;
+}
+
+.documentationWrapper {
+  padding: 1% 5%;
+  margin-bottom: 100px;
+}
+
+.documentationItems {
+  margin-top: 20px;
+}

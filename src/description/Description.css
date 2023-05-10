@@ -1,0 +1,11 @@
+.aboutUs {
+  /* background-color: rgb(0, 0, 0, 0.08); */
+}
+.aboutUsWrapper {
+  width: 80%;
+  margin: 0 auto;
+}
+
+.documentationLink {
+  text-decoration: underline;
+}

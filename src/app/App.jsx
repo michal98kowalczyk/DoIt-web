@@ -23,8 +23,10 @@ import "./App.css";
 const App = () => {
   return (
     <div className="App">
-      <Header />
-      <div className="wrapper">
+      <div className="headerWrapper">
+        <Header />
+      </div>
+      <div className="appWrapper">
         <Routes>
           <Route path="/" element={<HomeContainer />} />
           <Route path="/description" element={<Description />} />
@@ -45,7 +47,9 @@ const App = () => {
           <Route path="*" element={<PageNotFound />} />
         </Routes>
       </div>
-      <Footer />
+      <div className="footerWrapper">
+        <Footer />
+      </div>
     </div>
   );
 };

@@ -22,6 +22,7 @@ a.joinUs {
   flex-grow: 1;
   flex-shrink: 1;
   flex-basis: 55%;
+  position: relative;
 }
 
 .join {

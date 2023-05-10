@@ -75,7 +75,7 @@ const HeaderLoggedOut = () => {
               textDecoration: "none",
             }}
           >
-            Planer
+            Planner
           </Typography>
 
           <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
@@ -168,7 +168,7 @@ const HeaderLoggedOut = () => {
               textDecoration: "none",
             }}
           >
-            Planer
+            Planner
           </Typography>
           <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
             {pages.map((page) => (

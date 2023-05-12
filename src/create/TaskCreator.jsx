@@ -20,6 +20,7 @@ import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import CloseIcon from "@mui/icons-material/Close";
 import FormHelperText from "@mui/material/FormHelperText";
 import TextareaAutosize from "@mui/base/TextareaAutosize";
+import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import {
   TextField,
   Button,
@@ -34,6 +35,8 @@ import CustomAlert from "../alert/CustomAlert";
 import { useNavigate } from "react-router-dom";
 
 const DEFAULT_STATUS = "New";
+const TO_DO_STATUS = "To do";
+
 const PRIORITIES = ["Low", "Medium", "High"];
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
@@ -67,16 +70,19 @@ const TaskCreator = ({ type, close }) => {
   const [projectName, setProjectName] = useState("");
   const [isKanban, setIsKanban] = useState(false);
 
-  const [taskType, setTaskType] = useState(type);
+  const [taskType, setTaskType] = useState(type ? type : "Task");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [assignee, setAssignee] = useState([]);
+  const [attachments, setAttachments] = useState([]);
 
   const [dueDate, setDueDate] = useState(undefined);
   const [release, setRelease] = useState(undefined);
   const [priority, setPriority] = useState(PRIORITIES[0]);
   const [isPriorityError, setIsPriorityError] = useState(false);
-  const [status, setStatus] = useState(DEFAULT_STATUS);
+  const [status, setStatus] = useState(
+    type === "Task" ? TO_DO_STATUS : DEFAULT_STATUS
+  );
 
   const [sprint, setSprint] = useState("");
   const [storyPoints, setStoryPoints] = useState(0);
@@ -158,7 +164,7 @@ const TaskCreator = ({ type, close }) => {
   const [activeStep, setActiveStep] = React.useState(0);
 
   const handleNext = () => {
-    if (activeStep === 1 && !projectName) {
+    if (activeStep === 1 && (isTaskTypeError || !projectName)) {
       handleOpenAlert("warning", "To continue you need to choose project!");
       return;
     }
@@ -178,15 +184,16 @@ const TaskCreator = ({ type, close }) => {
   const handleProjectChange = async (event) => {
     const { value } = event.target;
     let pa = projectsAssignmentData.filter((p) => p.project.id === value);
+    setIsTaskTypeError(false);
+
     if (pa.length != 0) {
       let t = pa[0].project.availableTaskTypes.find((t) => t.name === taskType);
+      setProjectName(value);
 
       if (t) {
         await getUserAssignmentByProject(value);
         await getSprintsByProject(value);
         setIsKanban(pa[0].project.projectType === "KANBAN");
-
-        setProjectName(value);
         setIsTaskTypeError(false);
       } else {
         setIsTaskTypeError(true);
@@ -242,7 +249,6 @@ const TaskCreator = ({ type, close }) => {
       .then((response) => response.json())
       .then((data) => {
         if (data && data.length != 0) {
-          console.log("sprints ", data);
           let array = data.map((sp) => {
             let tmp = {
               id: sp.id,
@@ -285,7 +291,6 @@ const TaskCreator = ({ type, close }) => {
   };
 
   const handleStoryPointsChange = (e) => {
-    console.log("handleStoryPointsChange ", e.target.value);
     if (Number(e.target.value) % 1 !== 0) {
       handleOpenAlert("error", "Just integers allowed");
       return;
@@ -294,17 +299,61 @@ const TaskCreator = ({ type, close }) => {
   };
 
   const handleSprintChange = (e) => {
-    console.log("handleSprintChange ", e.target);
     let sp = sprintOptions.find((s) => s.id === e.target.value);
-    console.log("handleSprintChange ", sp);
     setSprint(e.target.value);
-    // setPriority(e.target.value);
   };
 
   const handleUpload = (e) => {
-    console.log("handleUpload ", e);
+    let tmp = [...attachments, ...Array.from(e.target.files)];
+    let names = tmp.map((f) => f.name);
+    let result = tmp.filter((f, p) => names.indexOf(f.name) == p);
 
-    console.log("handleUpload ", e.target.files);
+    if (result.length > 5) {
+      handleOpenAlert("error", "Just 5 attachments allowed");
+      return;
+    }
+
+    setAttachments(result);
+  };
+
+  const addAttachment = (taskId) => {
+    setIsLoading(true);
+    const url = "http://localhost:8080/api/v1/files";
+    let data = new FormData();
+    for (let i = 0; i < attachments.length; i++) {
+      data.append("files", attachments[i]);
+    }
+    data.append("user", user.userId);
+    data.append("task", taskId);
+
+    return fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${user.token}`,
+      },
+      body: data,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data) {
+          handleOpenAlert("success", "Task created successfully");
+          navigate("/tasks");
+        } else {
+          handleOpenAlert("error", data);
+        }
+      })
+      .catch((error) => {
+        console.error("error", error);
+        handleOpenAlert("error", error.message);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
+
+  const handleDeleteAttachment = (e) => {
+    const { name } = e.target.dataset;
+    setAttachments(attachments.filter((f) => f.name !== name));
   };
   const handleOpenAlert = (
     severity = "error",
@@ -330,6 +379,7 @@ const TaskCreator = ({ type, close }) => {
               labelId="demo-simple-select-label"
               id="demo-simple-select"
               value={taskType}
+              disabled={!!type}
               label="Task type"
               onChange={handleTaskTypeChange}
             >
@@ -514,9 +564,31 @@ const TaskCreator = ({ type, close }) => {
       label: <Typography variant="h6">Attachments</Typography>,
       body: (
         <div>
-          <Button variant="contained" component="label">
+          {attachments && attachments.length !== 0 ? (
+            <div>
+              {attachments.map((file) => {
+                return (
+                  <div key={file.name}>
+                    <InsertDriveFileIcon /> {file.name}{" "}
+                    <CloseIcon
+                      sx={{ cursor: "pointer" }}
+                      data-name={file.name}
+                      onClick={handleDeleteAttachment}
+                    ></CloseIcon>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            undefined
+          )}
+          <Button
+            variant="contained"
+            component="label"
+            sx={{ marginTop: "5px" }}
+          >
             Upload File
-            <input type="file" onChange={handleUpload} hidden />
+            <input type="file" onChange={handleUpload} hidden multiple />
           </Button>
         </div>
       ),
@@ -524,7 +596,69 @@ const TaskCreator = ({ type, close }) => {
   ];
 
   const handleSubmit = () => {
-    console.log("submit task");
+    if (!title || title === "") {
+      setIsTitleError(true);
+      setActiveStep(2);
+      return;
+    }
+
+    const taskRequest = prepareTaskRequest();
+    createTask(taskRequest);
+  };
+
+  const prepareTaskRequest = () => {
+    const payload = {
+      name: title,
+      description: description,
+      type: taskType,
+      status: status,
+      priority: String(priority).toUpperCase(),
+      project: { id: projectName },
+      reporter: { id: user.userId },
+    };
+    if (assignee && assignee.length !== 0) {
+      payload.assignee = { id: assignee.id };
+    }
+    if (!isKanban) {
+      if (sprint) {
+        payload.sprint = { id: sprint };
+      }
+      if (storyPoints) {
+        payload.storyPoints = storyPoints;
+      }
+    }
+    return JSON.stringify(payload);
+  };
+
+  const createTask = (taskPayload) => {
+    const url = "http://localhost:8080/api/v1/task";
+    const requestParams = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+      body: taskPayload,
+    };
+    setIsLoading(true);
+    fetch(url, requestParams)
+      .then((response) => response.json())
+      .then((data) => {
+        if (!data.errorMessage || data.errorMessage === "") {
+          return data.id;
+        } else {
+          handleOpenAlert("error", data.errorMessage);
+          return null;
+        }
+      })
+      .then((taskId) => (taskId !== null ? addAttachment(taskId) : null))
+      .catch((error) => {
+        console.error("error", error);
+        handleOpenAlert("error", error.message);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   };
 
   return (

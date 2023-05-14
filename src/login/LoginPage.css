@@ -7,8 +7,8 @@ main.login {
 
 .login-wrapper {
   background-color: rgba(255, 255, 255, 0.5);
-  /* min-width: 100vw;
-  min-height: calc(100vh - 150px); */
+  /* min-width: 100vw;*/
+  min-height: calc(100vh - 80px);
 }
 
 .login-form {

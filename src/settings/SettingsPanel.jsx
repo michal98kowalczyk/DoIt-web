@@ -404,7 +404,7 @@ const SettingsPanel = () => {
               width: { xs: "90%", md: "80%" },
             }}
           >
-            <CardContent>
+            <CardContent sx={{ marginBottom: "5%" }}>
               <Grid container justifyContent="space-between">
                 <Grid item>
                   <Typography

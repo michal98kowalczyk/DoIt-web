@@ -10,6 +10,7 @@ import LoginPage from "../login/LoginPage";
 import SignUpPage from "../signup/SignUpPage";
 import SignUpSuccess from "../signup/SignUpSuccess";
 import Projects from "../projects/Projects";
+import ProjectDetails from "../projects/ProjectDetails";
 import Tasks from "../tasks/Tasks";
 import Dashboards from "../dashboards/Dashboards";
 import Create from "../create/Create";
@@ -36,6 +37,7 @@ const App = () => {
           <Route path="/registered" element={<SignUpSuccess />} />
 
           <Route path="/projects" element={<Projects />} />
+          <Route path="/project" element={<ProjectDetails />} />
           <Route path="/dashboards" element={<Dashboards />} />
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/create" element={<Create />} />

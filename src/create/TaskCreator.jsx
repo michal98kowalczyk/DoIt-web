@@ -317,6 +317,11 @@ const TaskCreator = ({ type, close }) => {
   };
 
   const addAttachment = (taskId) => {
+    if (!attachments || attachments.length === 0) {
+      handleOpenAlert("success", "Task created successfully");
+      navigate("/tasks");
+      return;
+    }
     setIsLoading(true);
     const url = "http://localhost:8080/api/v1/files";
     let data = new FormData();

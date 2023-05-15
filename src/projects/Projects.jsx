@@ -140,7 +140,29 @@ const Projects = () => {
   };
 
   const handleProjectDelete = (projectId) => {
-    console.log("delete project ", projectId);
+    const url = `http://localhost:8080/api/v1/project/${projectId}`;
+    const requestParams = {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+    };
+
+    return fetch(url, requestParams)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.isSuccess) {
+          handleOpenAlert("success", "Project was deleted");
+          window.location.reload();
+        } else {
+          handleOpenAlert("error", data.errorMessage);
+        }
+      })
+      .catch((error) => {
+        console.error("error", error);
+        handleOpenAlert("error", error.message);
+      });
   };
 
   const isAssignedToProject = (p) => {
@@ -179,9 +201,6 @@ const Projects = () => {
       <Paper sx={{ marginTop: "1%" }}>
         {projectsFiltered.map((p, idx) => {
           return (
-            // <ListItem sx={{ borderBottom: borderBtmStyle, cursor:"pointer" }}>
-            //   <ListItemText primary={p.name} />
-            // </ListItem>
             <Accordion key={idx}>
               <AccordionSummary
                 expandIcon={<ExpandMoreIcon onClick={handleProjectOpen} />}

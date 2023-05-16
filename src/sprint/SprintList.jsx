@@ -37,6 +37,16 @@ const SprintList = () => {
   const [alertSeverity, setAlertSeverity] = useState("error");
   const [alertMessage, setAlertMessage] = useState("");
 
+  const [sprints, setSprints] = useState([]);
+  const [sprintsNotCompletedFinal, setSprintsNotCompletedFinal] = useState([]);
+  const [sprintsCompletedFinal, setSprintsCompletedFinal] = useState([]);
+
+  const [tasks, setTasks] = useState([]);
+  const [tasksToDisplay, setTasksToDisplay] = useState(new Map());
+  const [tasksToDisplayCompleted, setTasksToDisplayCompleted] = useState(
+    new Map()
+  );
+
   useEffect(() => {
     setProjectId(location.state.projectId);
 
@@ -45,12 +55,91 @@ const SprintList = () => {
     }
     const getInitialInfo = async () => {
       setIsLoading(true);
+      const sprintsTmp = await getSprints(location.state.projectId);
+      await getTasks(location.state.projectId, sprintsTmp);
 
       setIsLoading(false);
     };
 
     getInitialInfo();
   }, []);
+
+  const getSprints = (projectId) => {
+    const url = `http://localhost:8080/api/v1/sprint/project/${projectId}`;
+    const requestParams = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+    };
+
+    return fetch(url, requestParams)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data && data.length != 0) {
+          console.log("sprints ", data);
+          setSprints(data);
+        }
+        return data;
+      })
+      .catch((error) => {
+        console.error("error", error);
+        handleOpenAlert("error", error.message);
+      });
+  };
+
+  const getTasks = (projectId, sprintsTmp) => {
+    console.log("sprints getTasks ", sprintsTmp);
+    const url = `http://localhost:8080/api/v1/task/project/${projectId}`;
+    const requestParams = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+    };
+
+    return fetch(url, requestParams)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data && data.length != 0) {
+          let tmp = data.filter((t) => t.sprint);
+          setTasks(tmp);
+          prepareTasksToDisplay(tmp, sprintsTmp);
+        }
+
+        return data;
+      })
+      .catch((error) => {
+        console.error("error", error);
+        handleOpenAlert("error", error.message);
+      });
+  };
+
+  const prepareTasksToDisplay = (tasksTmp, sprintsTmp) => {
+    let sprintsNotCompleted = sprintsTmp.filter((s) => !s.isCompleted);
+    let sprintsCompleted = sprintsTmp.filter((s) => s.isCompleted);
+    setSprintsNotCompletedFinal(sprintsNotCompleted);
+    setSprintsCompletedFinal(sprintsCompleted);
+
+    let tasksNotCompletedMap = new Map();
+    let tasksCompletedMap = new Map();
+    for (let s of sprintsNotCompleted) {
+      let tasksBySprint = tasksTmp.filter((t) => t.sprint.id === s.id);
+      tasksNotCompletedMap.set(`Sprint ${s.sprintNumber}`, tasksBySprint);
+    }
+
+    for (let s of sprintsCompleted) {
+      let tasksBySprint = tasksTmp.filter((t) => t.sprint.id === s.id);
+      tasksCompletedMap.set(`Sprint ${s.sprintNumber}`, tasksBySprint);
+    }
+
+    console.log("tasksNotCompletedMap ", tasksNotCompletedMap);
+    console.log("tasksCompletedMap ", tasksCompletedMap);
+    setTasksToDisplay(tasksNotCompletedMap);
+    setTasksToDisplayCompleted(tasksCompletedMap);
+  };
 
   const handleOpenAlert = (
     severity = "error",
@@ -65,6 +154,14 @@ const SprintList = () => {
     }, time);
   };
 
+  const getFutureSprintsView = () => {
+    return <div>sprints</div>;
+  };
+
+  const getCompletedSprintsView = () => {
+    return <div>completed sprints</div>;
+  };
+
   return (
     <>
       {showAlert && (
@@ -75,7 +172,81 @@ const SprintList = () => {
         />
       )}
       {isLoading && <PageLoader />}
-      <main className="sprintList">sprintList {projectId}</main>
+      <main className="sprintList">
+        <div className="sprintNotCompleted">
+          <Box
+            sx={{
+              marginTop: "40px",
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{
+                paddingTop: "1%",
+                letterSpacing: "2px",
+                textAlign: "left",
+                paddingLeft: "2%",
+              }}
+            >
+              Future
+            </Typography>
+            {!sprintsNotCompletedFinal ||
+            (sprintsNotCompletedFinal &&
+              sprintsNotCompletedFinal.length === 0) ? (
+              <Typography
+                variant="h8"
+                component="div"
+                sx={{
+                  paddingTop: "1%",
+                  letterSpacing: "2px",
+                  textAlign: "left",
+                  paddingLeft: "2%",
+                }}
+              >
+                You have no sprints to complete.
+              </Typography>
+            ) : (
+              <Box>{getFutureSprintsView()}</Box>
+            )}
+          </Box>
+        </div>
+        <div className="sprintNotCompleted">
+          <Box
+            sx={{
+              marginTop: "40px",
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{
+                paddingTop: "1%",
+                letterSpacing: "2px",
+                textAlign: "left",
+                paddingLeft: "2%",
+              }}
+            >
+              Completed
+            </Typography>
+            {!sprintsCompletedFinal ||
+            (sprintsCompletedFinal && sprintsCompletedFinal.length === 0) ? (
+              <Typography
+                variant="h8"
+                component="div"
+                sx={{
+                  paddingTop: "1%",
+                  letterSpacing: "2px",
+                  textAlign: "left",
+                  paddingLeft: "2%",
+                }}
+              >
+                You have no sprints completed
+              </Typography>
+            ) : (
+              <Box>{getCompletedSprintsView()}</Box>
+            )}
+          </Box>
+        </div>
+      </main>
     </>
   );
 };

@@ -16,12 +16,11 @@ import EventNoteIcon from "@mui/icons-material/EventNote";
 import { Link } from "react-router-dom";
 import "./Header.css";
 
-const pages = ["Home", "Projects", "Dashboards", "Tasks", "Create"];
+const pages = ["Home", "Projects", "Dashboards", "Create"];
 const pagesPaths = new Map([
   ["Home", "/"],
   ["Projects", "/projects"],
   ["Dashboards", "/dashboards"],
-  ["Tasks", "/tasks"],
   ["Create", "/create"],
   ["Profile", "/profile"],
   ["Settings", "/settings"],
@@ -94,7 +93,7 @@ const HeaderLoggedIn = ({ userRole, name }) => {
               textDecoration: "none",
             }}
           >
-            Planer
+            Planner
           </Typography>
 
           <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
@@ -160,7 +159,7 @@ const HeaderLoggedIn = ({ userRole, name }) => {
               textDecoration: "none",
             }}
           >
-            Planer
+            Planner
           </Typography>
           <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
             {pages.map((page) => (

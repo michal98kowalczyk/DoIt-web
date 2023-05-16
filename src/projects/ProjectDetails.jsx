@@ -45,6 +45,8 @@ const ProjectDetails = () => {
   const [projectId, setProjectId] = useState(undefined);
   const [projectAssignment, setProjectAssignment] = useState(undefined);
   const [tasks, setTasks] = useState([]);
+  const [sprints, setSprints] = useState([]);
+  const [tasksToDisplay, setTasksToDisplay] = useState(new Map());
 
   const [isLoading, setIsLoading] = useState(false);
   // alert params
@@ -60,8 +62,10 @@ const ProjectDetails = () => {
     const getInitialInfo = async () => {
       setIsLoading(true);
 
-      await getProjectAssignmentDetails(location.state.projectId);
-      await getTasks(location.state.projectId);
+      const tmpAssignemnt = await getProjectAssignmentDetails(
+        location.state.projectId
+      );
+      await getTasks(location.state.projectId, tmpAssignemnt);
 
       setIsLoading(false);
     };
@@ -85,6 +89,7 @@ const ProjectDetails = () => {
         if (data && data.length != 0) {
           setProjectAssignment(data);
         }
+        return data;
       })
       .catch((error) => {
         console.error("error", error);
@@ -92,7 +97,7 @@ const ProjectDetails = () => {
       });
   };
 
-  const getTasks = (projectId) => {
+  const getTasks = (projectId, tmpAssignemnt) => {
     const url = `http://localhost:8080/api/v1/task/project/${projectId}`;
     const requestParams = {
       method: "GET",
@@ -105,20 +110,47 @@ const ProjectDetails = () => {
     return fetch(url, requestParams)
       .then((response) => response.json())
       .then((data) => {
-        console.log("tasks ", data);
         if (data && data.length != 0) {
+          const sprintsTmp = data
+            .filter((t) => t.sprint && !t.sprint.isCompleted)
+            .map((t) => t.sprint)
+            .sort((t1, t2) => t1.sprintNumber < t2.sprintNumber);
+          setSprints(sprintsTmp);
           setTasks(
             data.sort(
               (a, b) =>
                 new Date(b.lastModifiedDate) - new Date(a.lastModifiedDate)
             )
           );
+
+          prepareTasksToDisplay(data, sprintsTmp, tmpAssignemnt);
         }
       })
       .catch((error) => {
         console.error("error", error);
         handleOpenAlert("error", error.message);
       });
+  };
+
+  const prepareTasksToDisplay = (tasksTmp, sprintsTmp, tmpAssignemnt) => {
+    if (!tmpAssignemnt) {
+      return;
+    }
+    let tmp = new Map();
+    if (tmpAssignemnt.project.projectType === "KANBAN") {
+      tmp.set("Backlog", tasksTmp);
+    } else {
+      for (let s of sprintsTmp) {
+        let tasksBySprint = tasksTmp.filter(
+          (t) => t.sprint && t.sprint.id === s.id
+        );
+        tmp.set(`Sprint ${s.sprintNumber}`, tasksBySprint);
+      }
+      let backlog = tasksTmp.filter((t) => !t.sprint);
+      tmp.set("Backlog", backlog);
+    }
+
+    setTasksToDisplay(tmp);
   };
 
   const handleOpenAlert = (
@@ -147,7 +179,6 @@ const ProjectDetails = () => {
   };
 
   const navigateToTask = (taskId) => {
-    console.log("navigateToTask ", taskId);
     navigate("/task", { state: { taskId: taskId } });
   };
 
@@ -207,95 +238,118 @@ const ProjectDetails = () => {
     }
   };
 
-  const taskList = (
-    <Box sx={{ marginBottom: "100px" }}>
-      <Typography variant="h5" sx={{ marginTop: "1%", paddingLeft: "3%" }}>
-        Backlog
-      </Typography>
-      {tasks.map((t, idx) => {
-        const assigneName =
-          t.assignee && `${t.assignee.firstName} ${t.assignee.lastName}`;
+  const getTasksListView = () => {
+    let views = [];
+    let keys = tasksToDisplay.keys();
+    for (let k of keys) {
+      let tList = tasksToDisplay.get(k);
+      views.push(createSingleView(k, tList));
+    }
+    return views;
+  };
 
-        return (
-          <Card key={idx} sx={{ margin: "5px 3% 1px", padding: "2px" }}>
-            <Grid
-              container
-              direction="row"
-              justifyContent="center"
-              alignItems="center"
+  const createSingleView = (key, tList) => {
+    return (
+      <Box key={key}>
+        <Typography
+          key={key}
+          variant="h5"
+          sx={{ marginTop: "1%", paddingLeft: "3%" }}
+        >
+          {key}
+        </Typography>
+        {tList.map((t, idx) => {
+          const assigneName =
+            t.assignee && `${t.assignee.firstName} ${t.assignee.lastName}`;
+
+          return (
+            <Card
+              key={`${key}-${idx}`}
+              sx={{ margin: "5px 3% 1px", padding: "2px" }}
             >
-              <Grid item xs={1} sx={{ textAlign: "center" }}>
-                <Box>{getTaskIcon(t)}</Box>
-              </Grid>
-              <Grid item xs={1}>
-                <Typography variant="h7">{t.name}</Typography>
-              </Grid>
-              <Grid item xs={8} sx={{ textAlign: "right" }}>
-                <Grid item>
-                  <Box>
-                    <Tooltip title={`Priority ${t.priority.toLowerCase()}`}>
-                      {getPriorityIcon(t)}
-                    </Tooltip>
-                  </Box>
-                </Grid>
-              </Grid>
               <Grid
-                item
-                xs={1}
-                sx={{ textAlign: "right" }}
                 container
                 direction="row"
+                justifyContent="center"
+                alignItems="center"
               >
-                <Grid item>
-                  {projectAssignment.project.projectType === "SCRUM" && (
+                <Grid item xs={1} sx={{ textAlign: "center" }}>
+                  <Box>{getTaskIcon(t)}</Box>
+                </Grid>
+                <Grid item xs={1}>
+                  <Typography variant="h7">{t.name}</Typography>
+                </Grid>
+                <Grid item xs={8} sx={{ textAlign: "right" }}>
+                  <Grid item>
                     <Box>
-                      <Tooltip title="Story points">
-                        <IconButton sx={{ fontSize: "0.75rem" }}>
-                          SP:{t.storyPoints}
-                        </IconButton>
+                      <Tooltip title={`Priority ${t.priority.toLowerCase()}`}>
+                        {getPriorityIcon(t)}
                       </Tooltip>
                     </Box>
+                  </Grid>
+                </Grid>
+                <Grid
+                  item
+                  xs={1}
+                  sx={{ textAlign: "right" }}
+                  container
+                  direction="row"
+                >
+                  <Grid item>
+                    {projectAssignment.project.projectType === "SCRUM" && (
+                      <Box>
+                        <Tooltip title="Story points">
+                          <IconButton sx={{ fontSize: "0.75rem" }}>
+                            SP:{t.storyPoints}
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    )}
+                  </Grid>
+                  {t.assignee && (
+                    <Grid item>
+                      <Tooltip title={assigneName}>
+                        <IconButton>
+                          <Avatar
+                            sx={{
+                              maxWidth: "20px",
+                              maxHeight: "20px",
+                              fontSize: "0.75rem",
+                            }}
+                            alt={assigneName}
+                            src="/static/images/avatar/2.jpg"
+                          />
+                        </IconButton>
+                      </Tooltip>
+                    </Grid>
                   )}
                 </Grid>
-                {t.assignee && (
-                  <Grid item>
-                    <Tooltip title={assigneName}>
-                      <IconButton>
-                        <Avatar
-                          sx={{
-                            maxWidth: "20px",
-                            maxHeight: "20px",
-                            fontSize: "0.75rem",
-                          }}
-                          alt={assigneName}
-                          src="/static/images/avatar/2.jpg"
-                        />
-                      </IconButton>
-                    </Tooltip>
-                  </Grid>
-                )}
-              </Grid>
 
-              <Grid
-                item
-                xs={1}
-                sx={{
-                  textAlign: "right",
-                  paddingRight: "3px",
-                  cursor: "pointer",
-                }}
-              >
-                <Tooltip title="Open" data-task={t.id}>
-                  <OpenInNewIcon
-                    onClick={() => navigateToTask(t.id)}
-                  ></OpenInNewIcon>
-                </Tooltip>
+                <Grid
+                  item
+                  xs={1}
+                  sx={{
+                    textAlign: "right",
+                    paddingRight: "3px",
+                    cursor: "pointer",
+                  }}
+                >
+                  <Tooltip title="Open" data-task={t.id}>
+                    <OpenInNewIcon
+                      onClick={() => navigateToTask(t.id)}
+                    ></OpenInNewIcon>
+                  </Tooltip>
+                </Grid>
               </Grid>
-            </Grid>
-          </Card>
-        );
-      })}
-    </Box>
+            </Card>
+          );
+        })}
+      </Box>
+    );
+  };
+
+  const taskList = (
+    <Box sx={{ marginBottom: "100px" }}>{getTasksListView()}</Box>
   );
 
   const notFound = (

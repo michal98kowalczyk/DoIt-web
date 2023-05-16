@@ -1,26 +1,23 @@
 import React, { useEffect, useState } from "react";
+import "./Sprint.css";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemAvatar from "@mui/material/ListItemAvatar";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
-import Avatar from "@mui/material/Avatar";
-import IconButton from "@mui/material/IconButton";
-import FormGroup from "@mui/material/FormGroup";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Checkbox from "@mui/material/Checkbox";
 import Grid from "@mui/material/Grid";
-import FolderIcon from "@mui/icons-material/Folder";
-import DeleteIcon from "@mui/icons-material/Delete";
-import CardContent from "@mui/material/CardContent";
-import Card from "@mui/material/Card";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import Tooltip from "@mui/material/Tooltip";
+
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import PlayCircleFilledWhiteIcon from "@mui/icons-material/PlayCircleFilledWhite";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import PageLoader from "../loader/PageLoader";
 import CustomAlert from "../alert/CustomAlert";
+import TasksList from "../tasks/TasksList";
 
 import { useNavigate, useLocation } from "react-router-dom";
+import SprintForm from "./SprintForm";
 
 const SprintList = () => {
   const user = sessionStorage.getItem("user")
@@ -31,6 +28,7 @@ const SprintList = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [projectId, setProjectId] = useState(undefined);
+  const [projectAssignment, setProjectAssignment] = useState(undefined);
 
   // alert params
   const [showAlert, setShowAlert] = useState(false);
@@ -57,6 +55,7 @@ const SprintList = () => {
       setIsLoading(true);
       const sprintsTmp = await getSprints(location.state.projectId);
       await getTasks(location.state.projectId, sprintsTmp);
+      await getProjectAssignmentDetails(location.state.projectId);
 
       setIsLoading(false);
     };
@@ -77,8 +76,8 @@ const SprintList = () => {
     return fetch(url, requestParams)
       .then((response) => response.json())
       .then((data) => {
+        data.sort((a, b) => (b.sprintNumber < a.sprintNumber ? 1 : -1));
         if (data && data.length != 0) {
-          console.log("sprints ", data);
           setSprints(data);
         }
         return data;
@@ -90,7 +89,6 @@ const SprintList = () => {
   };
 
   const getTasks = (projectId, sprintsTmp) => {
-    console.log("sprints getTasks ", sprintsTmp);
     const url = `http://localhost:8080/api/v1/task/project/${projectId}`;
     const requestParams = {
       method: "GET",
@@ -117,6 +115,30 @@ const SprintList = () => {
       });
   };
 
+  const getProjectAssignmentDetails = (projectId) => {
+    const url = `http://localhost:8080/api/v1/assignment/project/${projectId}/user/${user.userId}`;
+    const requestParams = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+    };
+
+    return fetch(url, requestParams)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data && data.length != 0) {
+          setProjectAssignment(data);
+        }
+        return data;
+      })
+      .catch((error) => {
+        console.error("error", error);
+        handleOpenAlert("error", error.message);
+      });
+  };
+
   const prepareTasksToDisplay = (tasksTmp, sprintsTmp) => {
     let sprintsNotCompleted = sprintsTmp.filter((s) => !s.isCompleted);
     let sprintsCompleted = sprintsTmp.filter((s) => s.isCompleted);
@@ -135,8 +157,6 @@ const SprintList = () => {
       tasksCompletedMap.set(`Sprint ${s.sprintNumber}`, tasksBySprint);
     }
 
-    console.log("tasksNotCompletedMap ", tasksNotCompletedMap);
-    console.log("tasksCompletedMap ", tasksCompletedMap);
     setTasksToDisplay(tasksNotCompletedMap);
     setTasksToDisplayCompleted(tasksCompletedMap);
   };
@@ -155,11 +175,190 @@ const SprintList = () => {
   };
 
   const getFutureSprintsView = () => {
-    return <div>sprints</div>;
+    let views = [];
+    let keys = tasksToDisplay.keys();
+    let isFirst = true;
+    for (let k of keys) {
+      let tList = tasksToDisplay.get(k);
+      views.push(createSingleView(k, tList, false, isFirst));
+      isFirst = false;
+    }
+    return views;
   };
 
   const getCompletedSprintsView = () => {
-    return <div>completed sprints</div>;
+    let views = [];
+    let keys = tasksToDisplayCompleted.keys();
+    let isFirst = true;
+    for (let k of keys) {
+      let tList = tasksToDisplayCompleted.get(k);
+      views.push(createSingleView(k, tList, true, isFirst));
+      isFirst = false;
+    }
+    return views;
+  };
+
+  const createSingleView = (sprintTmp, tasksArray, isCompleted, isFirst) => {
+    let sprintNumber = sprintTmp.split(" ")[1];
+    let sprintDetails = sprints.filter(
+      (s) => Number(s.sprintNumber) === Number(sprintNumber)
+    )[0];
+    return (
+      <Accordion key={sprintTmp}>
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="panel1a-content"
+          id="panel1a-header"
+        >
+          <Typography variant="h6">{sprintTmp}</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Box className="sprintDetails" sx={{ textAlign: "left" }}>
+            <Grid container direction="row" justifyItems="start">
+              <Grid item>
+                <Box>
+                  <Typography
+                    component="span"
+                    sx={{ fontWeight: "bold", padding: "5px 10px" }}
+                  >
+                    Start date:
+                  </Typography>
+                  <Typography component="span" sx={{ padding: "5px 5px" }}>
+                    {sprintDetails.startDate}
+                  </Typography>
+                </Box>{" "}
+              </Grid>
+              <Grid item>
+                <Box>
+                  <Typography
+                    component="span"
+                    sx={{ fontWeight: "bold", padding: "5px 10px" }}
+                  >
+                    End date:
+                  </Typography>
+                  <Typography component="span" sx={{ padding: "5px 5px" }}>
+                    {sprintDetails.endDate}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item>
+                <Box>
+                  <Typography
+                    component="span"
+                    sx={{ fontWeight: "bold", padding: "5px 10px" }}
+                  >
+                    Fix Version:
+                  </Typography>
+                  <Typography component="span" sx={{ padding: "5px 5px" }}>
+                    {sprintDetails.release.fixVersion}
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </Box>
+
+          <Box className="sprintActions" sx={{ textAlign: "left" }}>
+            <Grid container direction="row" justifyItems="start">
+              {!isCompleted && isFirst && !sprintDetails.isActive && (
+                <Grid item sx={{ paddingRight: "20px" }}>
+                  <Tooltip
+                    title="Start Sprint"
+                    onClick={() => handleSprintStart(sprintDetails.id)}
+                    sx={{ cursor: "pointer" }}
+                  >
+                    <PlayCircleFilledWhiteIcon></PlayCircleFilledWhiteIcon>
+                  </Tooltip>
+                </Grid>
+              )}
+
+              {!isCompleted && isFirst && sprintDetails.isActive && (
+                <Grid item sx={{ paddingRight: "20px" }}>
+                  <Tooltip
+                    title="Complete Sprint"
+                    onClick={() => handleSprintComplete(sprintDetails.id)}
+                    sx={{ cursor: "pointer" }}
+                  >
+                    <CheckCircleOutlineIcon></CheckCircleOutlineIcon>
+                  </Tooltip>
+                </Grid>
+              )}
+
+              {!isCompleted && (
+                <Grid item>
+                  <SprintForm
+                    projectId={projectId}
+                    isEdit={true}
+                    iStartDate={sprintDetails.startDate}
+                    iEndDate={sprintDetails.endDate}
+                    releaseId={sprintDetails.release.id}
+                    sprintId={sprintDetails.id}
+                  ></SprintForm>
+                </Grid>
+              )}
+            </Grid>
+          </Box>
+
+          <Box className="tasks">
+            <TasksList
+              sprint={sprintTmp}
+              projectAssignment={projectAssignment}
+              tasks={tasksArray}
+            ></TasksList>
+          </Box>
+        </AccordionDetails>
+      </Accordion>
+    );
+  };
+
+  const handleSprintStart = (sprintId) => {
+    const url = `http://localhost:8080/api/v1/sprint/start/${sprintId}`;
+    const requestParams = {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+    };
+
+    fetch(url, requestParams)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data) {
+          handleOpenAlert("success", "Sprint started");
+          window.location.reload();
+        }
+        return data;
+      })
+      .catch((error) => {
+        console.error("error", error);
+        handleOpenAlert("error", error.message);
+      });
+  };
+
+  const handleSprintComplete = (sprintId) => {
+    const url = `http://localhost:8080/api/v1/sprint/complete/${sprintId}`;
+    const requestParams = {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+    };
+
+    fetch(url, requestParams)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data) {
+          handleOpenAlert("success", "Sprint completed");
+          window.location.reload();
+        }
+        return data;
+      })
+      .catch((error) => {
+        console.error("error", error);
+        handleOpenAlert("error", error.message);
+      });
   };
 
   return (
@@ -172,30 +371,16 @@ const SprintList = () => {
         />
       )}
       {isLoading && <PageLoader />}
-      <main className="sprintList">
-        <div className="sprintNotCompleted">
-          <Box
-            sx={{
-              marginTop: "40px",
-            }}
-          >
-            <Typography
-              variant="h6"
+      {!isLoading && (
+        <main className="sprintList">
+          <div className="sprintNotCompleted">
+            <Box
               sx={{
-                paddingTop: "1%",
-                letterSpacing: "2px",
-                textAlign: "left",
-                paddingLeft: "2%",
+                marginTop: "40px",
               }}
             >
-              Future
-            </Typography>
-            {!sprintsNotCompletedFinal ||
-            (sprintsNotCompletedFinal &&
-              sprintsNotCompletedFinal.length === 0) ? (
               <Typography
-                variant="h8"
-                component="div"
+                variant="h6"
                 sx={{
                   paddingTop: "1%",
                   letterSpacing: "2px",
@@ -203,35 +388,38 @@ const SprintList = () => {
                   paddingLeft: "2%",
                 }}
               >
-                You have no sprints to complete.
+                Future
               </Typography>
-            ) : (
-              <Box>{getFutureSprintsView()}</Box>
-            )}
-          </Box>
-        </div>
-        <div className="sprintNotCompleted">
-          <Box
-            sx={{
-              marginTop: "40px",
-            }}
-          >
-            <Typography
-              variant="h6"
+              {!sprintsNotCompletedFinal ||
+              (sprintsNotCompletedFinal &&
+                sprintsNotCompletedFinal.length === 0) ? (
+                <Typography
+                  variant="h8"
+                  component="div"
+                  sx={{
+                    paddingTop: "1%",
+                    letterSpacing: "2px",
+                    textAlign: "left",
+                    paddingLeft: "2%",
+                  }}
+                >
+                  You have no sprints to complete.
+                </Typography>
+              ) : (
+                <Box sx={{ width: "98%", margin: "0 auto" }}>
+                  {getFutureSprintsView()}
+                </Box>
+              )}
+            </Box>
+          </div>
+          <div className="sprintNotCompleted">
+            <Box
               sx={{
-                paddingTop: "1%",
-                letterSpacing: "2px",
-                textAlign: "left",
-                paddingLeft: "2%",
+                marginTop: "40px",
               }}
             >
-              Completed
-            </Typography>
-            {!sprintsCompletedFinal ||
-            (sprintsCompletedFinal && sprintsCompletedFinal.length === 0) ? (
               <Typography
-                variant="h8"
-                component="div"
+                variant="h6"
                 sx={{
                   paddingTop: "1%",
                   letterSpacing: "2px",
@@ -239,14 +427,31 @@ const SprintList = () => {
                   paddingLeft: "2%",
                 }}
               >
-                You have no sprints completed
+                Completed
               </Typography>
-            ) : (
-              <Box>{getCompletedSprintsView()}</Box>
-            )}
-          </Box>
-        </div>
-      </main>
+              {!sprintsCompletedFinal ||
+              (sprintsCompletedFinal && sprintsCompletedFinal.length === 0) ? (
+                <Typography
+                  variant="h8"
+                  component="div"
+                  sx={{
+                    paddingTop: "1%",
+                    letterSpacing: "2px",
+                    textAlign: "left",
+                    paddingLeft: "2%",
+                  }}
+                >
+                  You have no sprints completed
+                </Typography>
+              ) : (
+                <Box sx={{ width: "98%", margin: "0 auto" }}>
+                  {getCompletedSprintsView()}
+                </Box>
+              )}
+            </Box>
+          </div>
+        </main>
+      )}
     </>
   );
 };

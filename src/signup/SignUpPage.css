@@ -7,8 +7,8 @@ main.signup {
 
 .signup-wrapper {
   /* background-color: rgb(200, 200, 200); */
-  /* min-width: 100vw;
-  min-height: calc(100vh - 150px); */
+  /* min-width: 100vw;*/
+  min-height: calc(100vh - 80px);
 }
 
 .signup-form {

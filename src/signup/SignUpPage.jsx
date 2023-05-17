@@ -120,7 +120,6 @@ const SignUpPage = () => {
     fetch(url, requestParams)
       .then((response) => response.json())
       .then((data) => {
-        console.log("data ", data);
         if (data.success) {
           navigate("/registered");
           window.location.reload();

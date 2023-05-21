@@ -21,7 +21,14 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import { useNavigate, useLocation } from "react-router-dom";
 
-const SprintForm = ({ projectId }) => {
+const SprintForm = ({
+  projectId,
+  iStartDate,
+  iEndDate,
+  releaseId,
+  isEdit,
+  sprintId,
+}) => {
   const user = sessionStorage.getItem("user")
     ? JSON.parse(sessionStorage.getItem("user"))
     : null;
@@ -37,9 +44,13 @@ const SprintForm = ({ projectId }) => {
 
   const [releaseOptions, setReleaseOptions] = useState([]);
 
-  const [startDate, setStartDate] = useState(dayjs(new Date().toISOString()));
-  const [endDate, setEndDate] = useState(dayjs(new Date().toISOString()));
-  const [release, setRelease] = useState([]);
+  const [startDate, setStartDate] = useState(
+    iStartDate ? dayjs(iStartDate) : dayjs(new Date().toISOString())
+  );
+  const [endDate, setEndDate] = useState(
+    iEndDate ? dayjs(iEndDate) : dayjs(new Date().toISOString())
+  );
+  const [release, setRelease] = useState(releaseId ? releaseId : []);
 
   useEffect(() => {
     if (!user) {
@@ -82,7 +93,7 @@ const SprintForm = ({ projectId }) => {
     const payload = getSprintPayload();
 
     const requestParams = {
-      method: "POST",
+      method: isEdit ? "PATCH" : "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${user.token}`,
@@ -94,8 +105,11 @@ const SprintForm = ({ projectId }) => {
       .then((response) => response.json())
       .then((data) => {
         if (data.id) {
-          handleOpenAlert("success", "Created");
+          handleOpenAlert("success", isEdit ? "Updated" : "Created");
           handleClose();
+          if (isEdit) {
+            window.location.reload();
+          }
         } else if (data.errorMessage) {
           handleOpenAlert("error", data.errorMessage);
         }
@@ -118,6 +132,9 @@ const SprintForm = ({ projectId }) => {
       isActive: false,
       isCompleted: false,
     };
+    if (isEdit) {
+      payload.id = sprintId;
+    }
     return JSON.stringify(payload);
   };
 
@@ -192,73 +209,77 @@ const SprintForm = ({ projectId }) => {
         />
       )}
       {isLoading && <PageLoader />}
-      <>
-        <Tooltip
-          title="Create Sprint"
-          onClick={handleClickOpen}
-          sx={{ cursor: "pointer" }}
-        >
-          <AddIcon></AddIcon>
-        </Tooltip>
-        <Dialog
-          open={open}
-          onClose={handleClose}
-          aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
-          sx={{ padding: "30px 50px" }}
-        >
-          <DialogTitle
-            id="alert-dialog-title"
-            sx={{ borderBottom: "1px solid rgba(0,0,0,0.5)" }}
+      {!isLoading && (
+        <>
+          <Tooltip
+            title={isEdit ? "Edit Sprint" : "Create Sprint"}
+            onClick={handleClickOpen}
+            sx={{ cursor: "pointer" }}
           >
-            {"Create Sprint"}
-          </DialogTitle>
-          <DialogContent>
-            <FormControl
-              sx={{ width: "100%", padding: "10px 10px", marginTop: "10px" }}
+            {isEdit ? <Button>Edit</Button> : <AddIcon></AddIcon>}
+          </Tooltip>
+          <Dialog
+            open={open}
+            onClose={handleClose}
+            aria-labelledby="alert-dialog-title"
+            aria-describedby="alert-dialog-description"
+            sx={{ padding: "30px 50px" }}
+          >
+            <DialogTitle
+              id="alert-dialog-title"
+              sx={{ borderBottom: "1px solid rgba(0,0,0,0.5)" }}
             >
-              <InputLabel id="demo-multiple-chip-label">Fix version</InputLabel>
-              <Select
-                labelId="demo-simple-select-label"
-                id="demo-simple-select"
-                value={release}
-                label="Fix version"
-                onChange={handleReleaseChange}
+              {isEdit ? "Edit Sprint" : "Create Sprint"}
+            </DialogTitle>
+            <DialogContent>
+              <FormControl
+                sx={{ width: "100%", padding: "10px 10px", marginTop: "10px" }}
               >
-                {releaseOptions.map((r) => (
-                  <MenuItem key={r.id} value={r.id}>
-                    {r.fixVersion}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <Box sx={{ padding: "10px 10px", marginTop: "10px" }}>
-              <DatePicker
-                label="Start date"
-                value={startDate}
-                onChange={handleStartDateChange}
-                format="DD-MM-YYYY"
-                minDate={dayjs(new Date().toISOString())}
-              />
-            </Box>
-            <Box sx={{ padding: "10px 10px", marginTop: "10px" }}>
-              <DatePicker
-                label="End date"
-                value={endDate}
-                onChange={handleEndDateChange}
-                format="DD-MM-YYYY"
-                minDate={startDate}
-              />
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button onClick={handleSave} autoFocus>
-              Save
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </>
+                <InputLabel id="demo-multiple-chip-label">
+                  Fix version
+                </InputLabel>
+                <Select
+                  labelId="demo-simple-select-label"
+                  id="demo-simple-select"
+                  value={release}
+                  label="Fix version"
+                  onChange={handleReleaseChange}
+                >
+                  {releaseOptions.map((r) => (
+                    <MenuItem key={r.id} value={r.id}>
+                      {r.fixVersion}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Box sx={{ padding: "10px 10px", marginTop: "10px" }}>
+                <DatePicker
+                  label="Start date"
+                  value={startDate}
+                  onChange={handleStartDateChange}
+                  format="DD-MM-YYYY"
+                  minDate={dayjs(new Date().toISOString())}
+                />
+              </Box>
+              <Box sx={{ padding: "10px 10px", marginTop: "10px" }}>
+                <DatePicker
+                  label="End date"
+                  value={endDate}
+                  onChange={handleEndDateChange}
+                  format="DD-MM-YYYY"
+                  minDate={startDate}
+                />
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleClose}>Cancel</Button>
+              <Button onClick={handleSave} autoFocus>
+                Save
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </>
+      )}
     </>
   );
 };

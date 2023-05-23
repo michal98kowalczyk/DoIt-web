@@ -15,6 +15,8 @@ import Tasks from "../tasks/Tasks";
 import TaskDetails from "../tasks/TaskDetails";
 
 import Dashboards from "../dashboards/Dashboards";
+import DashboardDetail from "../dashboards/DashboardDetail";
+
 import Create from "../create/Create";
 import SettingsPanel from "../settings/SettingsPanel";
 import AdminPanel from "../admin/AdminPanel";
@@ -50,6 +52,8 @@ const App = () => {
             <Route path="/sprints" element={<SprintList />} />
 
             <Route path="/dashboards" element={<Dashboards />} />
+            <Route path="/dashboard" element={<DashboardDetail />} />
+
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/task" element={<TaskDetails />} />
 

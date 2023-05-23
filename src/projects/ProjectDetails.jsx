@@ -25,6 +25,7 @@ import PageLoader from "../loader/PageLoader";
 import CustomAlert from "../alert/CustomAlert";
 import ReleaseForm from "../release/ReleaseForm";
 import SprintForm from "../sprint/SprintForm";
+import DashboardForm from "../dashboards/DashboardForm";
 
 import HistoryEduIcon from "@mui/icons-material/HistoryEdu";
 import AssignmentIcon from "@mui/icons-material/Assignment";
@@ -182,6 +183,10 @@ const ProjectDetails = () => {
     navigate("/task", { state: { taskId: taskId } });
   };
 
+  const navigateToDashboards = () => {
+    navigate("/dashboards");
+  };
+
   const scrumActions = (
     <>
       <Box>
@@ -197,7 +202,10 @@ const ProjectDetails = () => {
         >
           Releases
         </Button>
-        <ReleaseForm projectId={projectId}></ReleaseForm>
+        <ReleaseForm
+          projectId={location.state.projectId}
+          isKanban={false}
+        ></ReleaseForm>
         <Button
           variant="text"
           type="submit"
@@ -211,11 +219,48 @@ const ProjectDetails = () => {
         >
           Sprints
         </Button>
-        <SprintForm projectId={projectId}></SprintForm>
+        <SprintForm projectId={location.state.projectId}></SprintForm>
+
+        <Button
+          variant="text"
+          type="submit"
+          onClick={() => navigateToDashboards()}
+          sx={{
+            color: "black",
+            borderColor: "black",
+            textDecoration: "underline",
+            marginLeft: "30px",
+          }}
+        >
+          Dashboards
+        </Button>
+        <DashboardForm projectId={location.state.projectId}></DashboardForm>
       </Box>
     </>
   );
-  const kanbanActions = <></>;
+  const kanbanActions = (
+    <>
+      <Box>
+        <Button
+          variant="text"
+          type="submit"
+          onClick={() => navigateToDashboards()}
+          sx={{
+            color: "black",
+            borderColor: "black",
+            textDecoration: "underline",
+            marginLeft: "30px",
+          }}
+        >
+          Dashboards
+        </Button>
+        <DashboardForm
+          projectId={location.state.projectId}
+          isKanban={true}
+        ></DashboardForm>
+      </Box>
+    </>
+  );
 
   const getTaskIcon = (t) => {
     switch (t.type) {

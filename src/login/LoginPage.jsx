@@ -74,7 +74,6 @@ const LoginPage = () => {
     fetch(url, requestParams)
       .then((response) => response.json())
       .then((data) => {
-        console.log("data ", data);
         if (data.success) {
           sessionStorage.setItem("user", JSON.stringify(data));
           navigate("/");

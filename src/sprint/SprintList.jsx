@@ -212,7 +212,7 @@ const SprintList = () => {
         >
           <Typography variant="h6">{sprintTmp}</Typography>
         </AccordionSummary>
-        <AccordionDetails>
+        <AccordionDetails sx={{ backgroundColor: "rgb(245,245,245,0.9)" }}>
           <Box className="sprintDetails" sx={{ textAlign: "left" }}>
             <Grid container direction="row" justifyItems="start">
               <Grid item>

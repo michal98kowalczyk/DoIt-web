@@ -49,7 +49,6 @@ const Projects = () => {
   const [projectsFiltered, setProjectsFiltered] = useState([]);
 
   useEffect(() => {
-    console.log("user ", user);
     if (!user) {
       navigate("/login");
     }
@@ -66,8 +65,6 @@ const Projects = () => {
   }, []);
 
   const getProjects = () => {
-    console.log("getProjects");
-
     const url = `http://localhost:8080/api/v1/project`;
     const requestParams = {
       method: "GET",
@@ -82,7 +79,6 @@ const Projects = () => {
       .then((data) => {
         if (data && data.length != 0) {
           let tmp = data.sort((a, b) => -b.name.localeCompare(a.name));
-          console.log(tmp);
           setProjects(tmp);
           setProjectsFiltered(tmp);
         }
@@ -107,7 +103,6 @@ const Projects = () => {
       .then((response) => response.json())
       .then((data) => {
         if (data && data.length != 0) {
-          console.log("projectassignments ", data);
           setProjectAssignment(data);
         }
       })
@@ -136,7 +131,6 @@ const Projects = () => {
 
   const handleProjectJoin = (projectId) => {
     handleOpenAlert("success", "Your request has been sent");
-    console.log("join ", projectId);
   };
 
   const handleProjectDelete = (projectId) => {
@@ -173,9 +167,7 @@ const Projects = () => {
   const handleProjectSearch = (e) => {
     const { value } = e.target;
     setProjectName(value);
-    console.log("name ", value);
     let filtered = projects.filter((p) => p.name.includes(value));
-    console.log("filtered ", filtered);
     setProjectsFiltered(filtered);
   };
 

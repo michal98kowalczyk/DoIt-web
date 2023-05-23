@@ -165,7 +165,6 @@ const SprintForm = ({
   };
 
   const handleSave = () => {
-    console.log("release ", release);
     if (!release || release.length === 0) {
       handleOpenAlert("error", "Choose fix version");
       return;

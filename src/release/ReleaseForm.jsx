@@ -17,7 +17,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import { useNavigate, useLocation } from "react-router-dom";
 
-const ReleaseForm = ({ projectId }) => {
+const ReleaseForm = ({ projectId, iFixVersion, releaseId, isEdit }) => {
   const user = sessionStorage.getItem("user")
     ? JSON.parse(sessionStorage.getItem("user"))
     : null;
@@ -31,7 +31,9 @@ const ReleaseForm = ({ projectId }) => {
   const [alertSeverity, setAlertSeverity] = useState("error");
   const [alertMessage, setAlertMessage] = useState("");
 
-  const [fixVersion, setFixVersion] = useState(dayjs(new Date().toISOString()));
+  const [fixVersion, setFixVersion] = useState(
+    iFixVersion ? dayjs(iFixVersion) : dayjs(new Date().toISOString())
+  );
 
   useEffect(() => {
     if (!user) {
@@ -50,7 +52,7 @@ const ReleaseForm = ({ projectId }) => {
     const url = `http://localhost:8080/api/v1/release`;
     const payload = getReleasePayload();
     const requestParams = {
-      method: "POST",
+      method: isEdit ? "PATCH" : "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${user.token}`,
@@ -62,8 +64,11 @@ const ReleaseForm = ({ projectId }) => {
       .then((response) => response.json())
       .then((data) => {
         if (data.id) {
-          handleOpenAlert("success", "Created");
+          handleOpenAlert("success", isEdit ? "Updated" : "Created");
           handleClose();
+          if (isEdit) {
+            window.location.reload();
+          }
         }
       })
       .catch((error) => {
@@ -78,14 +83,14 @@ const ReleaseForm = ({ projectId }) => {
       fixVersion.$M + 1 < 10 ? `0${fixVersion.$M + 1}` : `${fixVersion.$M + 1}`;
     let year = fixVersion.$y;
     let dateOfRelease = `${year}-${month}-${day}`;
-    console.log("release datee ", dateOfRelease);
     const payload = {
       fixVersion: dateOfRelease,
       project: { id: projectId },
       isReleased: false,
     };
-    console.log("payload ", payload);
-
+    if (isEdit) {
+      payload.id = releaseId;
+    }
     return JSON.stringify(payload);
   };
 
@@ -98,7 +103,6 @@ const ReleaseForm = ({ projectId }) => {
   };
 
   const handleSave = () => {
-    console.log("save release");
     createRelease();
   };
 
@@ -131,11 +135,11 @@ const ReleaseForm = ({ projectId }) => {
       {isLoading && <PageLoader />}
       <>
         <Tooltip
-          title="Create Release"
+          title={isEdit ? "Edit Release" : "Create Release"}
           onClick={handleClickOpen}
           sx={{ cursor: "pointer" }}
         >
-          <AddIcon></AddIcon>
+          {isEdit ? <Button>Edit</Button> : <AddIcon></AddIcon>}
         </Tooltip>
         <Dialog
           open={open}
@@ -148,7 +152,7 @@ const ReleaseForm = ({ projectId }) => {
             id="alert-dialog-title"
             sx={{ borderBottom: "1px solid rgba(0,0,0,0.5)" }}
           >
-            {"Create Release"}
+            {isEdit ? "Edit Release" : "Create Release"}
           </DialogTitle>
           <DialogContent>
             <Box sx={{ padding: "10px 10px", marginTop: "10px" }}>

@@ -35,10 +35,6 @@ import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const TasksList = ({ sprint, tasks, projectAssignment }) => {
-  console.log("key1 ", sprint);
-  console.log("tasks ", tasks);
-  console.log("projectAssignment ", projectAssignment);
-
   const navigate = useNavigate();
 
   const navigateToTask = (taskId) => {

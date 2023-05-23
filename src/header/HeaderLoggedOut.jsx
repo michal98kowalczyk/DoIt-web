@@ -29,9 +29,7 @@ const HeaderLoggedOut = () => {
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
 
-  useEffect(() => {
-    console.log("Header logged out");
-  }, []);
+  useEffect(() => {}, []);
 
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);

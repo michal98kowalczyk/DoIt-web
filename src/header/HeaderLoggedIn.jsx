@@ -31,8 +31,6 @@ const settings = ["Profile", "Settings", "Logout"];
 const HeaderLoggedIn = ({ userRole, name }) => {
   const navigate = useNavigate();
   const showAdminPanel = userRole === "ADMIN";
-  console.log("name ", name);
-  console.log("showAdminPanel ", showAdminPanel);
   const settingsToDisplay = showAdminPanel ? ["Manage", ...settings] : settings;
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
@@ -53,7 +51,6 @@ const HeaderLoggedIn = ({ userRole, name }) => {
     if (String(action).toLowerCase() === "logout") {
       handleLogOut();
     } else {
-      console.log("navigate to ", pagesPaths.get(action));
       navigate(pagesPaths.get(action));
     }
 

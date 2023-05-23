@@ -319,7 +319,7 @@ const TaskCreator = ({ type, close }) => {
   const addAttachment = (taskId) => {
     if (!attachments || attachments.length === 0) {
       handleOpenAlert("success", "Task created successfully");
-      navigate("/tasks");
+      navigate("/");
       return;
     }
     setIsLoading(true);
@@ -342,7 +342,7 @@ const TaskCreator = ({ type, close }) => {
       .then((data) => {
         if (data) {
           handleOpenAlert("success", "Task created successfully");
-          navigate("/tasks");
+          navigate("/");
         } else {
           handleOpenAlert("error", data);
         }

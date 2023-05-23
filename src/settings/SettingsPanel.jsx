@@ -98,7 +98,6 @@ const SettingsPanel = () => {
     fetch(url, requestParams)
       .then((response) => response.json())
       .then((data) => {
-        console.log("data ", data);
         if (data.success) {
           sessionStorage.setItem("user", JSON.stringify(data));
         } else {
@@ -138,17 +137,10 @@ const SettingsPanel = () => {
         password: newPassword,
       }),
     };
-    console.log(
-      JSON.stringify({
-        username: user.username,
-        oldPassword: oldPassword,
-        password: newPassword,
-      })
-    );
+
     fetch(url, requestParams)
       .then((response) => response.json())
       .then((data) => {
-        console.log("data ", data);
         if (data.success) {
           sessionStorage.setItem("user", JSON.stringify(data));
         } else {
@@ -181,7 +173,6 @@ const SettingsPanel = () => {
     fetch(url, requestParams)
       .then((response) => response.json())
       .then((data) => {
-        console.log("data ", data);
         if (data.success) {
           sessionStorage.removeItem("user");
           navigate("/");

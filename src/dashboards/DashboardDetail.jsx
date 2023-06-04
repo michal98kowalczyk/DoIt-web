@@ -46,9 +46,12 @@ const DashboardDetails = () => {
   const [dashboardId, setDashboardId] = useState(undefined);
 
   const [projectAssignment, setProjectAssignment] = useState(undefined);
+  const [dashboardDetails, setDashboardDetails] = useState(undefined);
+  const [projectDetails, setProjectDetails] = useState(undefined);
+
   const [tasks, setTasks] = useState([]);
   const [sprints, setSprints] = useState([]);
-  const [tasksToDisplay, setTasksToDisplay] = useState(new Map());
+  const [tasksToDisplay, setTasksToDisplay] = useState([]);
 
   const [isLoading, setIsLoading] = useState(false);
   // alert params
@@ -65,7 +68,10 @@ const DashboardDetails = () => {
     }
     const getInitialInfo = async () => {
       setIsLoading(true);
-      await getTasks(location.state.projectId);
+      const tasksTmp = await getTasks(location.state.projectId);
+      console.log("tasksTmp ", tasksTmp);
+      await getUserAssignmentByProject(location.state.projectId);
+      await getDashboardDetails(location.state.dashboardId);
 
       setIsLoading(false);
     };
@@ -98,6 +104,61 @@ const DashboardDetails = () => {
                 new Date(b.lastModifiedDate) - new Date(a.lastModifiedDate)
             )
           );
+          setTasksToDisplay(
+            data.sort(
+              (a, b) =>
+                new Date(b.lastModifiedDate) - new Date(a.lastModifiedDate)
+            )
+          );
+        }
+        return data;
+      })
+      .catch((error) => {
+        console.error("error", error);
+        handleOpenAlert("error", error.message);
+      });
+  };
+
+  const getUserAssignmentByProject = (projectId) => {
+    const url = `http://localhost:8080/api/v1/assignment/project/${projectId}`;
+    const requestParams = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+    };
+
+    return fetch(url, requestParams)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data && data.length != 0) {
+          setProjectAssignment(data);
+          setProjectDetails(data[0].project);
+        }
+      })
+      .catch((error) => {
+        console.error("error", error);
+        handleOpenAlert("error", error.message);
+      });
+  };
+
+  const getDashboardDetails = (dId) => {
+    const url = `http://localhost:8080/api/v1/dashboard/i/${dId}`;
+    const requestParams = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+    };
+
+    return fetch(url, requestParams)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data && data.length != 0) {
+          setDashboardDetails(data);
+          console.log("da details ", data);
         }
       })
       .catch((error) => {
@@ -156,6 +217,98 @@ const DashboardDetails = () => {
     }
   };
 
+  const getTasksByColumn = (c) => {
+    console.log("column ", c);
+    return tasksToDisplay
+      .filter((t) => t.status.toLowerCase() === c.toLowerCase())
+      .map((t) => {
+        return (
+          <Card
+            key={t.id}
+            sx={{
+              margin: "5px auto",
+            }}
+          >
+            <CardContent sx={{ textAlign: "left" }}>
+              <Typography>
+                <b>Title:</b> {t.name}
+              </Typography>
+              <Typography>
+                <b>Type:</b>
+                <Tooltip title={t.type}>
+                  <IconButton>{getTaskIcon(t)}</IconButton>
+                </Tooltip>
+              </Typography>
+              <Typography>
+                <b>Status:</b> {t.status}
+              </Typography>
+              <Typography>
+                <b>Priority:</b>
+
+                <Tooltip title={t.priority}>
+                  <IconButton>{getPriorityIcon(t)}</IconButton>
+                </Tooltip>
+              </Typography>
+              <Typography>
+                <b>Assignee:</b>
+
+                {t.assignee ? (
+                  <Tooltip
+                    title={`${t.assignee.firstName} ${t.assignee.lastName}`}
+                  >
+                    <IconButton>
+                      <Avatar
+                        alt={`${t.assignee.firstName} ${t.assignee.lastName}`}
+                        src={t.assignee.photoUrl}
+                        sx={{
+                          maxWidth: "20px",
+                          maxHeight: "20px",
+                          fontSize: "0.75rem",
+                        }}
+                      />
+                    </IconButton>
+                  </Tooltip>
+                ) : (
+                  " - "
+                )}
+              </Typography>
+              <br></br>
+              <Typography>
+                <b>Description:</b> {t.description}
+              </Typography>
+            </CardContent>
+          </Card>
+        );
+      });
+  };
+
+  const showCurrentSprint = () => {
+    setTasksToDisplay(tasks.filter((t) => t.sprint && t.sprint.isActive));
+  };
+
+  const clearFilters = () => {
+    setTasksToDisplay(tasks);
+  };
+
+  const getFilters = () => {
+    return projectDetails.projectType === "SCRUM"
+      ? getScrumFilters()
+      : getKanbanFilters();
+  };
+
+  const getScrumFilters = () => {
+    return (
+      <>
+        <Button onClick={showCurrentSprint}>Current Sprint</Button>
+        <Button onClick={clearFilters}>Clear</Button>
+      </>
+    );
+  };
+
+  const getKanbanFilters = () => {
+    return <></>;
+  };
+
   return (
     <>
       {showAlert && (
@@ -176,9 +329,32 @@ const DashboardDetails = () => {
             }}
           >
             <CardContent>
-              dashboard details projectid:{projectId} dId:{dashboardId}
+              {dashboardDetails && dashboardDetails.name}
             </CardContent>
+            <Box>{projectDetails && getFilters()}</Box>
           </Card>
+
+          <Grid
+            container
+            flexDirection="row"
+            spacing={1}
+            sx={{
+              margin: "20px auto 100px",
+              backgroundColor: "rgb(240,240,240,0.8)",
+              width: "95%",
+            }}
+          >
+            {dashboardDetails &&
+              dashboardDetails.columns.map((c) => {
+                return (
+                  <Grid item key={c} xs={12 / dashboardDetails.columns.length}>
+                    <Typography>{c}</Typography>
+
+                    {getTasksByColumn(c)}
+                  </Grid>
+                );
+              })}
+          </Grid>
         </main>
       )}
     </>

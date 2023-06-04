@@ -14,15 +14,17 @@ import CloseIcon from "@mui/icons-material/Close";
 import FormHelperText from "@mui/material/FormHelperText";
 import TextareaAutosize from "@mui/base/TextareaAutosize";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
+import { Link } from "react-router-dom";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
-import Autocomplete from "@mui/material/Autocomplete";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Grid from "@mui/material/Grid";
 import TextField from "@mui/material/TextField";
+import Checkbox from "@mui/material/Checkbox";
+import Autocomplete from "@mui/material/Autocomplete";
 
 import PageLoader from "../loader/PageLoader";
 import CustomAlert from "../alert/CustomAlert";
@@ -38,6 +40,8 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import MenuIcon from "@mui/icons-material/Menu";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import { useNavigate, useLocation } from "react-router-dom";
+import LinkedTaskForm from "./LinkedTaskForm";
+import AttachmentForm from "./AttachmentForm";
 
 const DEFAULT_STATUS = "New";
 const TO_DO_STATUS = "To do";
@@ -72,6 +76,7 @@ const TaskDetails = () => {
 
   const [isKanban, setIsKanban] = useState(false);
   const [usersOptions, setUsersOptions] = useState([]);
+  const [taskTypeStatuses, setTaskTypeStatuses] = useState([]);
 
   const [taskType, setTaskType] = useState(undefined);
   const [title, setTitle] = useState("");
@@ -85,9 +90,11 @@ const TaskDetails = () => {
 
   const [dueDate, setDueDate] = useState(undefined);
   const [release, setRelease] = useState(undefined);
-  const [priority, setPriority] = useState("");
+  const [priority, setPriority] = useState(undefined);
   const [isPriorityError, setIsPriorityError] = useState(false);
   const [status, setStatus] = useState("");
+  const [labels, setLabels] = useState([]);
+  const [labelTmp, setLabelTmp] = useState("");
 
   const [sprint, setSprint] = useState("");
   const [storyPoints, setStoryPoints] = useState(0);
@@ -102,7 +109,10 @@ const TaskDetails = () => {
       setIsLoading(true);
       let data = await getTaskDetails(location.state.taskId);
       await getComments(location.state.taskId);
-      await getUserAssignmentByProject(data.project.id);
+      await getAttachments(location.state.taskId);
+      await getSprintOptions(data.project.id);
+
+      await getUserAssignmentByProject(data.project.id, data);
       setIsLoading(false);
     };
 
@@ -133,7 +143,43 @@ const TaskDetails = () => {
       });
   };
 
-  const getUserAssignmentByProject = (projectId) => {
+  const getSprintOptions = (id) => {
+    const url = `http://localhost:8080/api/v1/sprint/project/${id}`;
+    const requestParams = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+    };
+
+    return fetch(url, requestParams)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data && data.length != 0) {
+          let array = data.map((sp) => {
+            let tmp = {
+              id: sp.id,
+              label: `${sp.sprintNumber} ${sp.startDate} - ${sp.endDate}`,
+              name: `${sp.sprintNumber} ${sp.startDate} - ${sp.endDate}`,
+              number: sp.sprintNumber,
+              key: `${sp.sprintNumber} ${sp.startDate}-${sp.endDate}-${sp.projectId}=${sp.createdDate}`,
+            };
+            return tmp;
+          });
+
+          setSprintOptions(
+            array.sort((a, b) => (a.number > b.number ? 1 : -1))
+          );
+        }
+      })
+      .catch((error) => {
+        console.error("error", error);
+        handleOpenAlert("error", error.message);
+      });
+  };
+
+  const getUserAssignmentByProject = (projectId, taskDataTmp) => {
     const url = `http://localhost:8080/api/v1/assignment/project/${projectId}`;
     const requestParams = {
       method: "GET",
@@ -159,6 +205,11 @@ const TaskDetails = () => {
           setUsersOptions(
             array.sort((a, b) => -b.label.localeCompare(a.label))
           );
+          if (taskDataTmp.assignee) {
+            setAssignee(
+              array.filter((a) => a.id === taskDataTmp.assignee.id)[0]
+            );
+          }
         }
       })
       .catch((error) => {
@@ -190,15 +241,57 @@ const TaskDetails = () => {
       });
   };
 
+  const getAttachments = (id) => {
+    const url = `http://localhost:8080/api/v1/file/task/${id}`;
+    const requestParams = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+    };
+
+    return fetch(url, requestParams)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("files ", data);
+        if (data && data.length !== 0) {
+          setAttachments(data);
+        }
+      })
+      .catch((error) => {
+        console.error("error", error);
+        handleOpenAlert("error", error.message);
+      });
+  };
+
   const setOptions = (data) => {
     setSprint(data.sprint ? data.sprint.id : undefined);
-    setRelease(data.release ? data.release.id : undefined);
+
+    let taskStatusesTmp = data.project.availableTaskTypes
+      .filter((f) => f.name === data.type)
+      .map((t) => t.availableTaskStatuses.map((s) => s.name));
+    console.log("taskStatusesTmp ", [...new Set(taskStatusesTmp.flat())]);
+    setTaskTypeStatuses([...new Set(taskStatusesTmp.flat())]);
+
     setIsKanban(data.project.projectType === "KANBAN");
     setTitle(data.name);
     setDescription(data.description);
     setTaskType(data.type);
     setStatus(data.status);
+    console.log(
+      "capitalizeFirstLetter(data.priority) ",
+      capitalizeFirstLetter(data.priority)
+    );
+    setPriority(capitalizeFirstLetter(String(data.priority)));
+    setLabels(data.labels);
+    setStoryPoints(data.storyPoints);
+    setDueDate(dayjs(data.dueDate));
   };
+
+  function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.toLowerCase().slice(1);
+  }
 
   const getTaskIcon = () => {
     switch (taskData.type) {
@@ -235,8 +328,30 @@ const TaskDetails = () => {
     setAttachmentsToSave(result);
   };
 
-  const handleDeleteAttachment = (e) => {
-    console.log("handleDeleteAttachment ", e);
+  const handleDeleteAttachment = (id) => {
+    console.log("handleDeleteAttachment ", id);
+    const url = `http://localhost:8080/api/v1/file/${id}`;
+    const requestParams = {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+    };
+
+    fetch(url, requestParams)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("deleted ", data);
+        if (data) {
+          handleOpenAlert("success", "File deleted");
+          window.location.reload();
+        }
+      })
+      .catch((error) => {
+        console.error("error", error);
+        handleOpenAlert("error", error.message);
+      });
   };
 
   const handleTitleChange = (e) => {
@@ -244,8 +359,46 @@ const TaskDetails = () => {
     setIsTitleError(false);
   };
 
+  const handleLabelTmpChange = (e) => {
+    setLabelTmp(e.target.value);
+  };
+  const handleLabelsBlur = (e) => {
+    console.log("handleLabelsBlur ", e);
+    if (labelTmp === "" || labels.includes(labelTmp)) {
+      return;
+    }
+    setLabels([...labels, labelTmp]);
+    setLabelTmp("");
+  };
+
+  const handleDeleteLabel = (l) => {
+    console.log("handleDeleteLabel ", l);
+    setLabels(labels.filter((tmp) => tmp !== l));
+  };
+
   const handleDescriptionChange = (e) => {
     setDescription(e.target.value);
+  };
+
+  const handlePriorityChange = (e) => {
+    setPriority(e.target.value);
+  };
+
+  const handleStatusChange = (e) => {
+    setStatus(e.target.value);
+  };
+
+  const handleSprintChange = (e) => {
+    let sp = sprintOptions.find((s) => s.id === e.target.value);
+    setSprint(e.target.value);
+  };
+
+  const handleStoryPointsChange = (e) => {
+    if (Number(e.target.value) % 1 !== 0) {
+      handleOpenAlert("error", "Just integers allowed");
+      return;
+    }
+    setStoryPoints(e.target.value);
   };
 
   const handleAddCommentChange = (e) => {
@@ -294,7 +447,65 @@ const TaskDetails = () => {
 
   const handleSaveTaskDetails = () => {
     console.log("handleSaveTaskDetails");
-    setIsEdit(false);
+    const taskUpdatePayload = prepareTaskUpdatePayload();
+
+    const url = `http://localhost:8080/api/v1/task`;
+    const requestParams = {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+      body: taskUpdatePayload,
+    };
+
+    fetch(url, requestParams)
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("handleSaveTaskDetails data ", data);
+        if (data.id) {
+          window.location.reload();
+        }
+      })
+      .catch((error) => {
+        console.error("error", error);
+        handleOpenAlert("error", error.message);
+      })
+      .finally(() => {
+        setIsLoading(false);
+        setIsEdit(false);
+      });
+  };
+
+  const prepareTaskUpdatePayload = () => {
+    let day = dueDate.$D < 10 ? `0${dueDate.$D}` : `${dueDate.$D}`;
+    let month =
+      dueDate.$M + 1 < 10 ? `0${dueDate.$M + 1}` : `${dueDate.$M + 1}`;
+    let year = dueDate.$y;
+    let dueDateFinal = `${year}-${month}-${day}`;
+
+    let payload = {
+      id: taskId,
+      name: title,
+      description: description,
+      status: status,
+      priority: priority.toUpperCase(),
+      labels: labels,
+      dueDate: dueDateFinal,
+    };
+
+    if (!isKanban) {
+      payload.storyPoints = storyPoints;
+      if (sprint) {
+        payload.sprint = { id: sprint };
+      }
+    }
+    if (assignee) {
+      payload.assignee = { id: assignee.id };
+    }
+
+    console.log("payload ", payload);
+    return JSON.stringify(payload);
   };
 
   const handleOpenAlert = (
@@ -313,7 +524,12 @@ const TaskDetails = () => {
   const handleAssigneeChange = (event, values) => {
     const { value } = event.target;
     const choice = usersOptions.find((u) => u.key === value);
+    console.log("values ", values);
     setAssignee(values);
+  };
+
+  const handleDueDataChange = (date) => {
+    setDueDate(date);
   };
 
   const navigateToTask = (taskId) => {
@@ -365,20 +581,39 @@ const TaskDetails = () => {
                     </Typography>
                     <Typography variant="h6">
                       <b>Priority: </b>
-                      {taskData.priority.toLowerCase()} {getPriorityIcon()}
+                      {capitalizeFirstLetter(taskData.priority)}{" "}
+                      {getPriorityIcon()}
                     </Typography>
                     <Typography variant="h6">
                       <b>Labels: </b>
-                      {taskData.labels.length === 0
-                        ? "-"
-                        : taskData.labels.map((l) => (
-                            <Typography component="span">{l}</Typography>
+                      {taskData.labels.length === 0 ? (
+                        "-"
+                      ) : (
+                        <Grid container>
+                          {labels.map((l) => (
+                            <Grid
+                              key={l}
+                              item
+                              xs={4}
+                              sx={{
+                                position: "relative",
+                                margin: "10px 10px",
+                                borderRadius: "50px",
+                                backgroundColor: "rgb(240,240,240,0.8)",
+                              }}
+                            >
+                              <MenuItem value={l}>{l}</MenuItem>
+                            </Grid>
                           ))}
+                        </Grid>
+                      )}
                     </Typography>
                     {!isKanban && (
                       <Typography variant="h6">
                         <b>Fix version: </b>
-                        {release && release.fixVersion}
+                        {taskData.sprint &&
+                          taskData.sprint.release &&
+                          taskData.sprint.release.fixVersion}
                       </Typography>
                     )}
                     {!isKanban && (
@@ -392,7 +627,6 @@ const TaskDetails = () => {
                 {isEdit && (
                   <Box>
                     <form>
-                      <Typography variant="h6">Title</Typography>
                       <TextField
                         data-name="title"
                         type="text"
@@ -404,8 +638,110 @@ const TaskDetails = () => {
                         required
                         error={isTitleError}
                         helperText={isTitleError ? "Complete this field" : ""}
-                        sx={{ width: "80%" }}
+                        sx={{ width: "80%", marginTop: "5px" }}
                       />
+
+                      <FormControl sx={{ width: "80%", marginTop: "5px" }}>
+                        <InputLabel id="demo-multiple-chip-label">
+                          Status
+                        </InputLabel>
+                        <Select
+                          labelId="demo-simple-select-label"
+                          id="demo-simple-select"
+                          value={status}
+                          label="Status"
+                          onChange={handleStatusChange}
+                        >
+                          {taskTypeStatuses.map((p) => (
+                            <MenuItem key={p} value={p}>
+                              {p}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+
+                      <FormControl sx={{ width: "80%", marginTop: "5px" }}>
+                        <InputLabel id="demo-multiple-chip-label">
+                          Priority
+                        </InputLabel>
+                        <Select
+                          labelId="demo-simple-select-label"
+                          id="demo-simple-select"
+                          value={priority}
+                          label="Priority"
+                          onChange={handlePriorityChange}
+                        >
+                          {PRIORITIES.map((p) => (
+                            <MenuItem key={p} value={p}>
+                              {p}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                        {isPriorityError && (
+                          <FormHelperText>Complete this field</FormHelperText>
+                        )}
+                      </FormControl>
+
+                      <FormControl sx={{ width: "80%", marginTop: "5px" }}>
+                        <TextField
+                          data-name="Labels"
+                          type="text"
+                          variant="outlined"
+                          color="primary"
+                          label="Labels"
+                          onChange={handleLabelTmpChange}
+                          onBlur={handleLabelsBlur}
+                          value={labelTmp}
+                          sx={{ marginTop: "5px" }}
+                        />
+                        {labels.length !== 0 && (
+                          <Grid container>
+                            {labels.map((l) => (
+                              <Grid
+                                key={l}
+                                item
+                                xs={4}
+                                sx={{
+                                  position: "relative",
+                                  margin: "10px 10px",
+                                  borderRadius: "50px",
+                                  backgroundColor: "rgb(240,240,240,0.8)",
+                                }}
+                              >
+                                <MenuItem value={l}>{l}</MenuItem>
+                                <CloseIcon
+                                  sx={{
+                                    cursor: "pointer",
+                                    position: "absolute",
+                                    top: "15%",
+                                    right: "5%",
+                                  }}
+                                  onClick={() => handleDeleteLabel(l)}
+                                ></CloseIcon>
+                              </Grid>
+                            ))}
+                          </Grid>
+                        )}
+                      </FormControl>
+                      {!isKanban && (
+                        <TextField
+                          data-name="title"
+                          type="number"
+                          variant="outlined"
+                          color="primary"
+                          label="Story Points"
+                          onChange={handleStoryPointsChange}
+                          InputProps={{
+                            inputProps: { min: 0, max: 21, step: "1" },
+                          }}
+                          value={storyPoints}
+                          disabled={isKanban}
+                          helperText={
+                            isKanban ? "Available just for Scrum projects" : ""
+                          }
+                          sx={{ width: "80%", marginTop: "5px" }}
+                        />
+                      )}
                     </form>
                   </Box>
                 )}
@@ -431,15 +767,14 @@ const TaskDetails = () => {
                     </Typography>
                   </>
                 )}
-                {!isKanban && (
+                {!isKanban && !isEdit && (
                   <Typography variant="h6" sx={{ marginTop: "50px" }}>
                     <b>Sprint: </b>
-                    {taskData.sprint}
+                    {taskData.sprint && taskData.sprint.sprintNumber}
                   </Typography>
                 )}
                 {isEdit && (
                   <Box>
-                    <Typography variant="h6">Assignee</Typography>
                     <Autocomplete
                       value={assignee}
                       onChange={handleAssigneeChange}
@@ -462,6 +797,38 @@ const TaskDetails = () => {
                         );
                       }}
                     />
+
+                    <Box sx={{ marginTop: "5px", width: "90%" }}>
+                      <DatePicker
+                        label="Due date"
+                        value={dueDate}
+                        onChange={handleDueDataChange}
+                        format="DD-MM-YYYY"
+                        minDate={dayjs(new Date().toISOString())}
+                        sx={{ width: "100%" }}
+                      />
+                    </Box>
+                    {!isKanban && (
+                      <FormControl sx={{ marginTop: "5px", width: "90%" }}>
+                        <InputLabel id="demo-multiple-chip-label">
+                          Sprint
+                        </InputLabel>
+                        <Select
+                          labelId="demo-simple-select-label"
+                          id="demo-simple-select"
+                          value={sprint}
+                          label="Sprint"
+                          disabled={isKanban}
+                          onChange={handleSprintChange}
+                        >
+                          {sprintOptions.map((sp) => (
+                            <MenuItem key={sp.key} value={sp.id}>
+                              {sp.label}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    )}
                   </Box>
                 )}
               </Grid>
@@ -523,30 +890,30 @@ const TaskDetails = () => {
                   position: "relative",
                 }}
               >
-                <AddIcon
-                  onClick={addRelatedTask}
-                  sx={{
-                    position: "absolute",
-                    top: "1%",
-                    right: "1%",
-                    cursor: "pointer",
-                  }}
-                ></AddIcon>
+                <LinkedTaskForm
+                  projectId={taskData.project.id}
+                  taskId={taskData.id}
+                  blockedBy={taskData.blockedBy}
+                ></LinkedTaskForm>
                 <Typography
                   component="div"
+                  sx={{ cursor: "pointer" }}
                   onClick={() => {
-                    navigateToTask(taskData.clonedFrom);
+                    if (!taskData.clonedFrom) return;
+                    navigateToTask(taskData.clonedFrom.id);
                   }}
                 >
                   <b>Cloned from: </b>
-                  {taskData.clonedFrom}
+                  {taskData.clonedFrom && taskData.clonedFrom.name}
                 </Typography>
                 <Typography component="div">
                   <b>Blocked by: </b>
                   {taskData.blockedBy.map((b) => {
                     return (
                       <Typography
+                        key={`${b.id}-${b.name}`}
                         component="div"
+                        sx={{ cursor: "pointer" }}
                         onClick={() => {
                           navigateToTask(b.id);
                         }}
@@ -569,15 +936,10 @@ const TaskDetails = () => {
                   position: "relative",
                 }}
               >
-                <AddIcon
-                  onClick={addAttachments}
-                  sx={{
-                    position: "absolute",
-                    top: "1%",
-                    right: "1%",
-                    cursor: "pointer",
-                  }}
-                ></AddIcon>
+                <AttachmentForm
+                  count={attachments.length}
+                  taskId={taskId}
+                ></AttachmentForm>
                 <Typography component="div">
                   <b>Attachments: </b>
                   {attachments && attachments.length !== 0 ? (
@@ -585,11 +947,12 @@ const TaskDetails = () => {
                       {attachments.map((file) => {
                         return (
                           <div key={file.name}>
-                            <InsertDriveFileIcon /> {file.name}{" "}
+                            <InsertDriveFileIcon />{" "}
+                            <Link to={file.url}>{file.name} </Link>
                             <CloseIcon
                               sx={{ cursor: "pointer" }}
                               data-name={file.name}
-                              onClick={handleDeleteAttachment}
+                              onClick={() => handleDeleteAttachment(file.id)}
                             ></CloseIcon>
                           </div>
                         );

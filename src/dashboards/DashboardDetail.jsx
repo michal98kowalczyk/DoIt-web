@@ -29,11 +29,15 @@ import DashboardForm from "../dashboards/DashboardForm";
 import HistoryEduIcon from "@mui/icons-material/HistoryEdu";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import BugReportIcon from "@mui/icons-material/BugReport";
+import BugReportOutlinedIcon from "@mui/icons-material/BugReportOutlined";
+import Diversity3OutlinedIcon from "@mui/icons-material/Diversity3Outlined";
+import QuizOutlinedIcon from "@mui/icons-material/QuizOutlined";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import MenuIcon from "@mui/icons-material/Menu";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import { useNavigate, useLocation } from "react-router-dom";
+import { common } from "@mui/material/colors";
 
 const DashboardDetails = () => {
   const user = sessionStorage.getItem("user")
@@ -46,6 +50,9 @@ const DashboardDetails = () => {
   const [dashboardId, setDashboardId] = useState(undefined);
 
   const [projectAssignment, setProjectAssignment] = useState(undefined);
+  const [usersInProject, setUsersInProject] = useState([]);
+  const [availableLabels, setAvailableLabels] = useState([]);
+
   const [dashboardDetails, setDashboardDetails] = useState(undefined);
   const [projectDetails, setProjectDetails] = useState(undefined);
 
@@ -110,6 +117,7 @@ const DashboardDetails = () => {
                 new Date(b.lastModifiedDate) - new Date(a.lastModifiedDate)
             )
           );
+          setAvailableLabels([...data.map((t) => t.labels)].flat());
         }
         return data;
       })
@@ -135,6 +143,17 @@ const DashboardDetails = () => {
         if (data && data.length != 0) {
           setProjectAssignment(data);
           setProjectDetails(data[0].project);
+
+          let array = data.map((pa) => {
+            let tmp = {
+              id: pa.user.id,
+              label: `${pa.user.firstName} ${pa.user.lastName}`,
+              name: pa.user.email,
+              key: pa.user.email,
+            };
+            return tmp;
+          });
+          setUsersInProject(array);
         }
       })
       .catch((error) => {
@@ -202,7 +221,17 @@ const DashboardDetails = () => {
         return <HistoryEduIcon sx={{ color: "green" }} />;
       case "Bug":
         return <BugReportIcon sx={{ color: "red" }} />;
+      case "Defect":
+        return <BugReportOutlinedIcon sx={{ color: "orange" }} />;
       case "Task":
+        return <AssignmentIcon sx={{ color: "blue" }} />;
+      case "Technical":
+        return <AssignmentIcon sx={{ color: "grey" }} />;
+      case "Team":
+        return <Diversity3OutlinedIcon sx={{ color: "blue" }} />;
+      case "Test":
+        return <QuizOutlinedIcon sx={{ color: "green" }} />;
+      default:
         return <AssignmentIcon sx={{ color: "blue" }} />;
     }
   };
@@ -227,8 +256,23 @@ const DashboardDetails = () => {
             key={t.id}
             sx={{
               margin: "5px auto",
+              position: "relative",
             }}
           >
+            <Tooltip
+              title="Open"
+              data-task={t.id}
+              sx={{
+                position: "absolute",
+                top: "10px",
+                right: "10px",
+                cursor: "pointer",
+              }}
+            >
+              <OpenInNewIcon
+                onClick={() => navigateToTask(t.id)}
+              ></OpenInNewIcon>
+            </Tooltip>
             <CardContent sx={{ textAlign: "left" }}>
               <Typography>
                 <b>Title:</b> {t.name}
@@ -299,14 +343,73 @@ const DashboardDetails = () => {
   const getScrumFilters = () => {
     return (
       <>
-        <Button onClick={showCurrentSprint}>Current Sprint</Button>
-        <Button onClick={clearFilters}>Clear</Button>
+        {getAssigneeFilters()}
+        {getLabelFilters()}
+        <Box className="sprintFilters">
+          Sprints
+          <Button onClick={showCurrentSprint}>Current Sprint</Button>
+        </Box>
+        <Box className="clearFilters">
+          <Button onClick={clearFilters}>Clear</Button>
+        </Box>
       </>
     );
   };
 
   const getKanbanFilters = () => {
-    return <></>;
+    return (
+      <>
+        {getAssigneeFilters()}
+        {getLabelFilters()}
+        <Box className="clearFilters">
+          <Button onClick={clearFilters}>Clear</Button>
+        </Box>
+      </>
+    );
+  };
+
+  const getAssigneeFilters = () => {
+    return (
+      <Box className="assigneeFilters">
+        Assignee:
+        {usersInProject.map((u) => {
+          return (
+            <Button key={u.id} onClick={() => filterByAssignee(u.id)}>
+              {u.label}
+            </Button>
+          );
+        })}
+      </Box>
+    );
+  };
+
+  const getLabelFilters = () => {
+    return (
+      <Box className="labelFilters">
+        Labels:
+        {availableLabels.map((l, idx) => {
+          return (
+            <Button key={idx} onClick={() => filterByLabel(l)}>
+              {l}
+            </Button>
+          );
+        })}
+      </Box>
+    );
+  };
+
+  const filterByLabel = (label) => {
+    setTasksToDisplay(
+      tasks.filter((t) => t.labels && t.labels.includes(label))
+    );
+  };
+
+  const filterByAssignee = (assigneeId) => {
+    console.log("assigneeId ", assigneeId);
+    console.log("tasksToDisplay ", tasksToDisplay);
+    setTasksToDisplay(
+      tasks.filter((t) => t.assignee && t.assignee.userId === assigneeId)
+    );
   };
 
   return (
@@ -329,7 +432,9 @@ const DashboardDetails = () => {
             }}
           >
             <CardContent>
-              {dashboardDetails && dashboardDetails.name}
+              {dashboardDetails && (
+                <Typography variant="h5">{dashboardDetails.name}</Typography>
+              )}
             </CardContent>
             <Box>{projectDetails && getFilters()}</Box>
           </Card>

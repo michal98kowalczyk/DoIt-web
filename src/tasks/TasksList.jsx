@@ -32,6 +32,9 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import MenuIcon from "@mui/icons-material/Menu";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import BugReportOutlinedIcon from "@mui/icons-material/BugReportOutlined";
+import Diversity3OutlinedIcon from "@mui/icons-material/Diversity3Outlined";
+import QuizOutlinedIcon from "@mui/icons-material/QuizOutlined";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const TasksList = ({ sprint, tasks, projectAssignment }) => {
@@ -47,7 +50,17 @@ const TasksList = ({ sprint, tasks, projectAssignment }) => {
         return <HistoryEduIcon sx={{ color: "green" }} />;
       case "Bug":
         return <BugReportIcon sx={{ color: "red" }} />;
+      case "Defect":
+        return <BugReportOutlinedIcon sx={{ color: "orange" }} />;
       case "Task":
+        return <AssignmentIcon sx={{ color: "blue" }} />;
+      case "Technical":
+        return <AssignmentIcon sx={{ color: "grey" }} />;
+      case "Team":
+        return <Diversity3OutlinedIcon sx={{ color: "blue" }} />;
+      case "Test":
+        return <QuizOutlinedIcon sx={{ color: "green" }} />;
+      default:
         return <AssignmentIcon sx={{ color: "blue" }} />;
     }
   };

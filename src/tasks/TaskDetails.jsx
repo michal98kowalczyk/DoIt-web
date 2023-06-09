@@ -30,6 +30,9 @@ import PageLoader from "../loader/PageLoader";
 import CustomAlert from "../alert/CustomAlert";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
+import BugReportOutlinedIcon from "@mui/icons-material/BugReportOutlined";
+import Diversity3OutlinedIcon from "@mui/icons-material/Diversity3Outlined";
+import QuizOutlinedIcon from "@mui/icons-material/QuizOutlined";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import HistoryEduIcon from "@mui/icons-material/HistoryEdu";
@@ -299,7 +302,17 @@ const TaskDetails = () => {
         return <HistoryEduIcon sx={{ color: "green" }} />;
       case "Bug":
         return <BugReportIcon sx={{ color: "red" }} />;
+      case "Defect":
+        return <BugReportOutlinedIcon sx={{ color: "orange" }} />;
       case "Task":
+        return <AssignmentIcon sx={{ color: "blue" }} />;
+      case "Technical":
+        return <AssignmentIcon sx={{ color: "grey" }} />;
+      case "Team":
+        return <Diversity3OutlinedIcon sx={{ color: "blue" }} />;
+      case "Test":
+        return <QuizOutlinedIcon sx={{ color: "green" }} />;
+      default:
         return <AssignmentIcon sx={{ color: "blue" }} />;
     }
   };

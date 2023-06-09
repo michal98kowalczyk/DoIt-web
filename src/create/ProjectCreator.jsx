@@ -121,7 +121,11 @@ const ProjectCreator = ({ type, close }) => {
             };
             return tmp;
           });
-          setUserOptions(array.sort((a, b) => -b.label.localeCompare(a.label)));
+          setUserOptions(
+            array
+              .filter((u) => u.id !== user.userId)
+              .sort((a, b) => -b.label.localeCompare(a.label))
+          );
         }
       })
       .catch((error) => {

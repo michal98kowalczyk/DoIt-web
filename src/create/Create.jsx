@@ -25,7 +25,15 @@ import ProjectCreator from "./ProjectCreator";
 import TaskCreator from "./TaskCreator";
 
 const projectOptions = ["Kanban", "Scrum"];
-const taskOptions = ["Task", "Bug", "Story"];
+const taskOptions = [
+  "Task",
+  "Bug",
+  "Story",
+  "Technical",
+  "Team",
+  "Defect",
+  "Test",
+];
 const Create = () => {
   const [isLoading, setIsLoading] = useState(false);
   // alert params
@@ -107,7 +115,7 @@ const Create = () => {
       </Typography>
       <Grid container>
         {taskOptions.map((option) => (
-          <Grid key={option} item xs={12} md={12 / (taskOptions.length * 2)}>
+          <Grid key={option} item xs={12} md={4}>
             <Paper
               data-name={option}
               data-type="task"

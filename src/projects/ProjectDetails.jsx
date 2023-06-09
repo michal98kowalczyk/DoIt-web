@@ -26,7 +26,9 @@ import CustomAlert from "../alert/CustomAlert";
 import ReleaseForm from "../release/ReleaseForm";
 import SprintForm from "../sprint/SprintForm";
 import DashboardForm from "../dashboards/DashboardForm";
-
+import BugReportOutlinedIcon from "@mui/icons-material/BugReportOutlined";
+import Diversity3OutlinedIcon from "@mui/icons-material/Diversity3Outlined";
+import QuizOutlinedIcon from "@mui/icons-material/QuizOutlined";
 import HistoryEduIcon from "@mui/icons-material/HistoryEdu";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import BugReportIcon from "@mui/icons-material/BugReport";
@@ -268,7 +270,17 @@ const ProjectDetails = () => {
         return <HistoryEduIcon sx={{ color: "green" }} />;
       case "Bug":
         return <BugReportIcon sx={{ color: "red" }} />;
+      case "Defect":
+        return <BugReportOutlinedIcon sx={{ color: "orange" }} />;
       case "Task":
+        return <AssignmentIcon sx={{ color: "blue" }} />;
+      case "Technical":
+        return <AssignmentIcon sx={{ color: "grey" }} />;
+      case "Team":
+        return <Diversity3OutlinedIcon sx={{ color: "blue" }} />;
+      case "Test":
+        return <QuizOutlinedIcon sx={{ color: "green" }} />;
+      default:
         return <AssignmentIcon sx={{ color: "blue" }} />;
     }
   };
